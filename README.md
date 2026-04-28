@@ -2,7 +2,7 @@
 
 A pixel cat that lives on your macOS desktop and watches your GitHub PRs.
 
-Built for WooCommerce contributors who miss notifications, lose track of review requests, and never get to celebrate a merge properly.
+Built for anyone who misses notifications, loses track of review requests, and never gets to properly celebrate a merge.
 
 ---
 
@@ -77,7 +77,11 @@ bash ~/tools/woo-sprinkles/watch.sh
 
 ## Customise
 
-The repo is currently set up for the `woocommerce/woocommerce` repo. To use it for a different repo, change the `REPO` variable in `watch.sh` and `sync.sh`.
+Change the `REPO` variable at the top of `watch.sh` and `sync.sh` to point at your own GitHub repo:
+
+```bash
+REPO="your-org/your-repo"
+```
 
 ---
 
