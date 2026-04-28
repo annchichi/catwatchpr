@@ -39,8 +39,35 @@ fi
 if [ -z "$my_prs" ]; then
     echo "0" > "$CONFIG/pending_count"
     echo ""  > "$CONFIG/pending_notifs"
+    echo ""  > "$CONFIG/ci_watching"
     exit 0
 fi
+
+# CI check monitoring — detect when running checks complete on any open PR
+CI_FILE="$CONFIG/ci_watching"
+touch "$CI_FILE"
+prev_watching=$(cat "$CI_FILE" 2>/dev/null | tr '\n' ' ')
+now_watching=""
+
+for pr in $my_prs; do
+    checks=$(gh pr checks "$pr" --repo "$REPO" 2>/dev/null)
+    [ -z "$checks" ] && continue
+
+    has_pending=$(echo "$checks" | awk -F'\t' '$2=="pending"' | grep -c . 2>/dev/null || echo 0)
+    has_fail=$(echo "$checks"    | awk -F'\t' '$2=="fail"'    | grep -c . 2>/dev/null || echo 0)
+
+    if [ "$has_pending" -gt 0 ]; then
+        now_watching="$now_watching$pr "
+    elif echo " $prev_watching " | grep -qw "$pr"; then
+        # Was running last check — now finished
+        if [ "$has_fail" -gt 0 ]; then
+            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR #$pr has failing checks" &
+        else
+            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR #$pr is clear to merge!" &
+        fi
+    fi
+done
+echo "$now_watching" > "$CI_FILE"
 
 # Fetch unread notifications for this repo that are on PullRequests
 notif_tsv=$(gh api notifications --jq '
