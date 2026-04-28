@@ -125,7 +125,21 @@ func reasonLabel(_ reason: String) -> String {
     case "mention":          return "💬 mentioned you"
     case "comment":          return "💬 new comment"
     case "assign":           return "📋 assigned to you"
+    case "ci_pass":          return "✅ clear to merge"
+    case "ci_fail":          return "❌ checks failing"
     default:                 return "🔔 new activity"
+    }
+}
+
+func ciNotifs() -> [(pr: String, reason: String)] {
+    let file = configDir.appendingPathComponent("ci_notifs")
+    guard let content = try? String(contentsOf: file, encoding: .utf8) else { return [] }
+    return content.split(separator: "\n").compactMap { line in
+        let s = String(line)
+        guard !s.isEmpty else { return nil }
+        let parts = s.split(separator: ":", maxSplits: 1).map(String.init)
+        guard !parts[0].isEmpty else { return nil }
+        return (pr: parts[0], reason: parts.count > 1 ? parts[1] : "ci_pass")
     }
 }
 
@@ -169,8 +183,8 @@ func buildMenu() -> NSMenu {
     menu.addItem(checkedItem)
     menu.addItem(.separator())
 
-    // Pending notifications
-    let notifs = pendingNotifs()
+    // Pending notifications — CI results first, then PR activity
+    let notifs = ciNotifs() + pendingNotifs()
     if notifs.isEmpty {
         let noneItem = NSMenuItem(title: "No pending notifications", action: nil, keyEquivalent: "")
         noneItem.isEnabled = false

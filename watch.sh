@@ -48,6 +48,7 @@ CI_FILE="$CONFIG/ci_watching"
 touch "$CI_FILE"
 prev_watching=$(cat "$CI_FILE" 2>/dev/null | tr '\n' ' ')
 now_watching=""
+echo "" > "$CONFIG/ci_notifs"  # reset CI results each run
 
 for pr in $my_prs; do
     checks=$(gh pr checks "$pr" --repo "$REPO" 2>/dev/null)
@@ -61,8 +62,10 @@ for pr in $my_prs; do
     elif echo " $prev_watching " | grep -qw "$pr"; then
         # Was running last check — now finished
         if [ "$has_fail" -gt 0 ]; then
+            echo "$pr:ci_fail" >> "$CONFIG/ci_notifs"
             swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR #$pr has failing checks" &
         else
+            echo "$pr:ci_pass" >> "$CONFIG/ci_notifs"
             swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR #$pr is clear to merge!" &
         fi
     fi
