@@ -53,8 +53,8 @@ for pr in $my_prs; do
     checks=$(gh pr checks "$pr" --repo "$REPO" 2>/dev/null)
     [ -z "$checks" ] && continue
 
-    has_pending=$(echo "$checks" | awk -F'\t' '$2=="pending"' | grep -c . 2>/dev/null || echo 0)
-    has_fail=$(echo "$checks"    | awk -F'\t' '$2=="fail"'    | grep -c . 2>/dev/null || echo 0)
+    has_pending=$(echo "$checks" | awk -F'\t' '$2=="pending"{c++} END{print c+0}')
+    has_fail=$(echo "$checks"    | awk -F'\t' '$2=="fail"{c++} END{print c+0}')
 
     if [ "$has_pending" -gt 0 ]; then
         now_watching="$now_watching$pr "
