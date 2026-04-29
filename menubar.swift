@@ -107,8 +107,8 @@ func lastCheckedLabel() -> String {
     return "Checked \(mins) mins ago"
 }
 
-func pendingNotifs() -> [(pr: String, reason: String)] {
-    let file = configDir.appendingPathComponent("pending_notifs")
+func inboxNotifs() -> [(pr: String, reason: String)] {
+    let file = configDir.appendingPathComponent("inbox")
     guard let content = try? String(contentsOf: file, encoding: .utf8) else { return [] }
     return content.split(separator: "\n").compactMap { line in
         let s = String(line)
@@ -117,6 +117,15 @@ func pendingNotifs() -> [(pr: String, reason: String)] {
         guard !parts[0].isEmpty else { return nil }
         return (pr: parts[0], reason: parts.count > 1 ? parts[1] : "subscribed")
     }
+}
+
+func removePRFromInbox(_ pr: String) {
+    let file = configDir.appendingPathComponent("inbox")
+    guard let content = try? String(contentsOf: file, encoding: .utf8) else { return }
+    let updated = content.split(separator: "\n")
+        .filter { !String($0).hasPrefix("\(pr):") }
+        .joined(separator: "\n")
+    try? updated.write(to: file, atomically: true, encoding: .utf8)
 }
 
 func reasonLabel(_ reason: String) -> String {
@@ -131,18 +140,6 @@ func reasonLabel(_ reason: String) -> String {
     }
 }
 
-func ciNotifs() -> [(pr: String, reason: String)] {
-    let file = configDir.appendingPathComponent("ci_notifs")
-    guard let content = try? String(contentsOf: file, encoding: .utf8) else { return [] }
-    return content.split(separator: "\n").compactMap { line in
-        let s = String(line)
-        guard !s.isEmpty else { return nil }
-        let parts = s.split(separator: ":", maxSplits: 1).map(String.init)
-        guard !parts[0].isEmpty else { return nil }
-        return (pr: parts[0], reason: parts.count > 1 ? parts[1] : "ci_pass")
-    }
-}
-
 // MARK: - Actions
 
 class Actions: NSObject {
@@ -152,7 +149,10 @@ class Actions: NSObject {
     @objc func openPR(_ sender: NSMenuItem) {
         guard let urlStr = sender.representedObject as? String,
               let url = URL(string: urlStr) else { return }
+        let pr = url.lastPathComponent
+        removePRFromInbox(pr)
         NSWorkspace.shared.open(url)
+        updateIcon()
     }
     @objc func switchCat(_ sender: NSMenuItem) {
         guard let color = sender.representedObject as? String else { return }
@@ -183,8 +183,8 @@ func buildMenu() -> NSMenu {
     menu.addItem(checkedItem)
     menu.addItem(.separator())
 
-    // Pending notifications — CI results first, then PR activity
-    let notifs = ciNotifs() + pendingNotifs()
+    // Persistent inbox — stays until user clicks through
+    let notifs = inboxNotifs()
     if notifs.isEmpty {
         let noneItem = NSMenuItem(title: "No pending notifications", action: nil, keyEquivalent: "")
         noneItem.isEnabled = false
@@ -236,7 +236,7 @@ func buildMenu() -> NSMenu {
 }
 
 func updateIcon() {
-    let count   = pendingCount()
+    let count   = inboxNotifs().count
     let palette = palettes[currentCatColor()] ?? palettes["cyan"]!
     statusItem.menu = buildMenu()
     if let btn = statusItem.button {
