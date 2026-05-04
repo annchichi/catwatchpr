@@ -92,7 +92,7 @@ echo "$now_watching" > "$CI_FILE"
 notif_tsv=$(gh api notifications --jq '
   [.[] | select(
     .unread == true and
-    .repository.full_name == "woocommerce/woocommerce" and
+    .repository.full_name == "'"$REPO"'" and
     .subject.type == "PullRequest"
   ) | {
     id:     .id,
