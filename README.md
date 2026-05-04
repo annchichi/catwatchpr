@@ -6,6 +6,10 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 - When your PR gets merged, it throws confetti
 - The cat only shows up when something needs your attention, then disappears — no noise, no constant pinging. Your notifications wait quietly in the menu bar whenever you're ready
 
+| | | |
+|---|---|---|
+| ![notification](docs/notification.png) | ![synced](docs/synced.png) | ![confetti](docs/confetti.png) |
+
 ---
 
 ## What it does
