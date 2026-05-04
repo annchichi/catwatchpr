@@ -30,6 +30,29 @@ if ! gh auth status &>/dev/null; then
     gh auth login
 fi
 
+# 4. Repo selection
+gh_user=$(gh api /user --jq .login 2>/dev/null)
+DEFAULT_REPO="woocommerce/woocommerce"
+
+if gh api "/orgs/woocommerce/members/$gh_user" --silent 2>/dev/null; then
+    # User is in the woocommerce org — suggest the default
+    read -rp "Watch $DEFAULT_REPO? [Y/n] " repo_confirm
+    repo_confirm="${repo_confirm:-Y}"
+    if [[ "$repo_confirm" =~ ^[Yy]$ ]]; then
+        CHOSEN_REPO="$DEFAULT_REPO"
+    else
+        read -rp "Which repo? (format: org/repo) " CHOSEN_REPO
+    fi
+else
+    read -rp "Which GitHub repo do you want to watch? (format: org/repo) " CHOSEN_REPO
+fi
+
+# Validate format
+if [[ ! "$CHOSEN_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+    echo "✗ Invalid repo format. Expected: org/repo (e.g. mycompany/myrepo)"
+    exit 1
+fi
+
 # Install Woo Sprinkles launchd agents
 AGENTS="$HOME/Library/LaunchAgents"
 
