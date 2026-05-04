@@ -454,7 +454,7 @@ class CatView: NSView {
             let bh: CGFloat
             if !greetLine.isEmpty {
                 let measured = NSAttributedString(string: greetLine, attributes: [.font: greetFont])
-                    .boundingRect(with: NSSize(width: bw-20, height: 200), options: .usesLineFragmentOrigin)
+                    .boundingRect(with: NSSize(width: 10000, height: 200), options: .usesLineFragmentOrigin)
                 bh = ceil(measured.height) + 24
             } else {
                 bh = hasAction ? CGFloat(38 + actionLines * 18) : 38
@@ -483,14 +483,14 @@ class CatView: NSView {
                     .foregroundColor: NSColor(hex:"#ffd700").withAlphaComponent(bubbleAlpha)
                 ]
                 NSAttributedString(string:celebrationMsg,attributes:a)
-                    .draw(in: NSRect(x:bx+10, y:by+12, width:bw-20, height:bh-24))
+                    .draw(at: NSPoint(x:bx+10, y:by+12))
             } else if !greetLine.isEmpty {
                 let a: [NSAttributedString.Key:Any] = [
                     .font: greetFont,
                     .foregroundColor: palette.body.withAlphaComponent(bubbleAlpha)
                 ]
                 NSAttributedString(string:greetLine,attributes:a)
-                    .draw(in: NSRect(x:bx+10, y:by+12, width:bw-20, height:bh-24))
+                    .draw(at: NSPoint(x:bx+10, y:by+12))
             } else {
                 if !summaryLine.isEmpty {
                     let a: [NSAttributedString.Key:Any] = [
@@ -530,7 +530,7 @@ let notifMentions = Int(cmdArgs.count > 7 ? cmdArgs[7] : "0") ?? 0
 let notifAssigns  = Int(cmdArgs.count > 8 ? cmdArgs[8] : "0") ?? 0
 let prActivity    = Int(cmdArgs.count > 9 ? cmdArgs[9] : "0") ?? 0
 let greetMsg      = cmdArgs.count > 10
-    ? cmdArgs[10].components(separatedBy:.newlines).joined(separator:" ").trimmingCharacters(in:.whitespaces)
+    ? cmdArgs[10].components(separatedBy:.whitespacesAndNewlines).filter{!$0.isEmpty}.joined(separator:" ")
     : ""
 let mergedPRsRaw  = cmdArgs.count > 11
     ? cmdArgs[11].split(separator:",").map(String.init).filter{!$0.isEmpty}
