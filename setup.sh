@@ -18,6 +18,12 @@ if ! command -v brew &>/dev/null; then
     exit 0
 fi
 
+# 2. GitHub CLI
+if ! command -v gh &>/dev/null; then
+    echo "→ Installing GitHub CLI..."
+    brew install gh
+fi
+
 # Install Woo Sprinkles launchd agents
 AGENTS="$HOME/Library/LaunchAgents"
 
