@@ -1,8 +1,20 @@
 #!/bin/bash
 
-# Install Woo Sprinkles launchd agents
-
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# ── Preflight ────────────────────────────────────────────────────────────────
+
+# 1. Homebrew
+if ! command -v brew &>/dev/null; then
+    echo "→ Installing Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    echo ""
+    echo "✓ Homebrew installed."
+    echo "  Please close this terminal, open a new one, then run setup.sh again."
+    exit 0
+fi
+
+# Install Woo Sprinkles launchd agents
 AGENTS="$HOME/Library/LaunchAgents"
 
 chmod +x "$DIR/sync.sh" "$DIR/watch.sh"
