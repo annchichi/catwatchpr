@@ -53,6 +53,12 @@ if [[ ! "$CHOSEN_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
     exit 1
 fi
 
+# 5. Patch repo into config files
+sed -i '' "s|^REPO=.*|REPO=\"$CHOSEN_REPO\"|" "$DIR/watch.sh"
+sed -i '' "s|^REPO=.*|REPO=\"$CHOSEN_REPO\"|" "$DIR/sync.sh"
+echo "✓ Watching: $CHOSEN_REPO"
+echo ""
+
 # Install Woo Sprinkles launchd agents
 AGENTS="$HOME/Library/LaunchAgents"
 
