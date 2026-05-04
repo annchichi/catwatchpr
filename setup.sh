@@ -34,7 +34,7 @@ fi
 gh_user=$(gh api /user --jq .login 2>/dev/null)
 DEFAULT_REPO="woocommerce/woocommerce"
 
-if gh api "/orgs/woocommerce/members/$gh_user" --silent 2>/dev/null; then
+if [[ -n "$gh_user" ]] && gh api "/orgs/woocommerce/members/$gh_user" --silent 2>/dev/null; then
     # User is in the woocommerce org — suggest the default
     read -rp "Watch $DEFAULT_REPO? [Y/n] " repo_confirm
     repo_confirm="${repo_confirm:-Y}"
