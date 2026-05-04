@@ -7,10 +7,14 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 1. Homebrew
 if ! command -v brew &>/dev/null; then
     echo "→ Installing Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if ! /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+        echo "✗ Homebrew installation failed. Please install it manually: https://brew.sh"
+        exit 1
+    fi
     echo ""
     echo "✓ Homebrew installed."
     echo "  Please close this terminal, open a new one, then run setup.sh again."
+    echo "  If 'brew' is still not found after reopening, follow the instructions the installer printed above."
     exit 0
 fi
 
