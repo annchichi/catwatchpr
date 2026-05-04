@@ -47,6 +47,8 @@ cd ~/tools/woo-sprinkles
 bash setup.sh
 ```
 
+During setup you'll be asked which repo to watch. If you're in the Woo org it defaults to `woocommerce/woocommerce` — just hit Enter. Otherwise type your own (e.g. `mycompany/myrepo`).
+
 This installs three background agents:
 - **watch** — checks GitHub notifications every 5 minutes
 - **sync** — syncs your open PR branches at 9am daily
