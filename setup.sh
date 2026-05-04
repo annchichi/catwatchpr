@@ -24,6 +24,12 @@ if ! command -v gh &>/dev/null; then
     brew install gh
 fi
 
+# 3. GitHub auth
+if ! gh auth status &>/dev/null; then
+    echo "→ Let's log you into GitHub..."
+    gh auth login
+fi
+
 # Install Woo Sprinkles launchd agents
 AGENTS="$HOME/Library/LaunchAgents"
 
