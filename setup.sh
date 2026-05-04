@@ -97,7 +97,7 @@ cat_color=$(cat "$HOME/.config/woo-sprinkles/cat_color" 2>/dev/null || echo "cya
 hour=$(date +%H)
 case "$cat_name" in
     boba)   greeting="Hey! I've got your PRs covered ✨" ;;
-    matcha) greeting="PRs synced. You're good." ;;
+    matcha) greeting="PRs synced — you're good." ;;
     miso)   greeting="hello… watching over your PRs" ;;
     *)
         if   [ "$hour" -lt 12 ]; then greeting="Good morning! Watching your PRs"

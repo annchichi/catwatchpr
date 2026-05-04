@@ -1,8 +1,10 @@
 # CatWatchPR / Woo Sprinkles
 
-A pixel cat that lives on your macOS desktop and watches your GitHub PRs.
+A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requests for you.
 
-Built for anyone who misses notifications, loses track of review requests, and never gets to properly celebrate a merge.
+- It pops up when someone comments, requests a review, or mentions you — so you're never the person who missed a notification
+- When your PR gets merged, it throws confetti
+- The cat only shows up when something needs your attention, then disappears — no noise, no constant pinging. Your notifications wait quietly in the menu bar whenever you're ready
 
 ---
 
@@ -27,8 +29,9 @@ Built for anyone who misses notifications, loses track of review requests, and n
 ## Requirements
 
 - macOS
-- [GitHub CLI](https://cli.github.com/) (`gh`) — logged in
 - Swift (comes with Xcode or `xcode-select --install`)
+
+Everything else (Homebrew, GitHub CLI, GitHub login) is handled automatically by `setup.sh`.
 
 ---
 
@@ -77,7 +80,7 @@ bash ~/tools/woo-sprinkles/watch.sh
 
 ## Customise
 
-Change the `REPO` variable at the top of `watch.sh` and `sync.sh` to point at your own GitHub repo:
+`setup.sh` will ask which repo you want to watch during install. If you want to change it later, update the `REPO` variable at the top of `watch.sh` and `sync.sh`:
 
 ```bash
 REPO="your-org/your-repo"
