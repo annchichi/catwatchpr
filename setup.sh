@@ -21,13 +21,19 @@ fi
 # 2. GitHub CLI
 if ! command -v gh &>/dev/null; then
     echo "→ Installing GitHub CLI..."
-    brew install gh
+    if ! brew install gh; then
+        echo "✗ Failed to install GitHub CLI. Try: brew install gh"
+        exit 1
+    fi
 fi
 
 # 3. GitHub auth
 if ! gh auth status &>/dev/null; then
     echo "→ Let's log you into GitHub..."
-    gh auth login
+    if ! gh auth login; then
+        echo "✗ GitHub login cancelled or failed. Please run setup.sh again."
+        exit 1
+    fi
 fi
 
 # 4. Repo selection
