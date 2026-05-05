@@ -65,18 +65,30 @@ sed -i '' "s|^REPO=.*|REPO=\"$CHOSEN_REPO\"|" "$DIR/sync.sh"
 echo "✓ Watching: $CHOSEN_REPO"
 echo ""
 
+# Build the menubar app (compiles menubar.swift → WooSprinklesMenuBar.app)
+echo "→ Building menubar app..."
+if ! bash "$DIR/build_menubar.sh"; then
+    echo "✗ Failed to build menubar app."
+    exit 1
+fi
+echo ""
+
 # Install Woo Sprinkles launchd agents
 AGENTS="$HOME/Library/LaunchAgents"
 
 chmod +x "$DIR/sync.sh" "$DIR/watch.sh"
 
+# Plists ship with hardcoded paths from the author's machine. Rewrite them to
+# this user's $DIR / $HOME before installing, so the agents resolve correctly.
 for plist in com.annchiahui.woo-sprinkles.menubar.plist \
              com.annchiahui.woo-sprinkles.watch.plist \
              com.annchiahui.woo-sprinkles.sync.plist; do
     dest="$AGENTS/$plist"
     # Unload first if already running
     launchctl unload "$dest" 2>/dev/null || true
-    cp "$DIR/$plist" "$dest"
+    sed -e "s|/Users/anntai/tools/woo-sprinkles|$DIR|g" \
+        -e "s|/Users/anntai|$HOME|g" \
+        "$DIR/$plist" > "$dest"
     launchctl load "$dest"
     echo "✓ loaded $plist"
 done

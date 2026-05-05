@@ -48,7 +48,7 @@ echo "$color" > "$CONFIG/cat_color"
 
 # Update the menubar plist color arg and restart
 if [ -f "$MENUBAR_PLIST" ]; then
-    sed -i '' "s|<string>cyan\|pink\|lime\|ghost</string>|<string>$color</string>|" "$MENUBAR_PLIST" 2>/dev/null || true
+    sed -i '' -E "s|<string>(cyan|pink|lime|ghost)</string>|<string>$color</string>|" "$MENUBAR_PLIST" 2>/dev/null || true
     launchctl unload "$MENUBAR_PLIST" 2>/dev/null
     launchctl load  "$MENUBAR_PLIST"
 fi
