@@ -111,11 +111,17 @@ func inboxNotifs() -> [(pr: String, reason: String)] {
     let file = configDir.appendingPathComponent("inbox")
     guard let content = try? String(contentsOf: file, encoding: .utf8) else { return [] }
     return content.split(separator: "\n").compactMap { line in
-        let s = String(line)
+        let s = String(line).trimmingCharacters(in: .whitespaces)
         guard !s.isEmpty else { return nil }
-        let parts = s.split(separator: ":", maxSplits: 1).map(String.init)
-        guard !parts[0].isEmpty else { return nil }
-        return (pr: parts[0], reason: parts.count > 1 ? parts[1] : "subscribed")
+        let parts = s.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
+                     .map(String.init)
+        guard let pr = parts.first?.trimmingCharacters(in: .whitespaces),
+              !pr.isEmpty,
+              pr.allSatisfy({ $0.isNumber }) else { return nil }
+        let reason = parts.count > 1
+            ? parts[1].trimmingCharacters(in: .whitespaces)
+            : "subscribed"
+        return (pr: pr, reason: reason.isEmpty ? "subscribed" : reason)
     }
 }
 
