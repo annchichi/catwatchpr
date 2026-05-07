@@ -120,3 +120,53 @@ final class AppState: ObservableObject {
         return lines.last(where: { $0.contains("Fatal error") })
     }
 }
+
+enum WizardStep: Int, CaseIterable {
+    case welcome, authCheck, repoPicker, install, catPicker
+}
+
+@MainActor
+final class WizardState: ObservableObject {
+    @Published var step: WizardStep = .welcome
+    @Published var ghAuthed: Bool = false
+    @Published var repo: String = ""
+    @Published var installError: String? = nil
+    @Published var installing: Bool = false
+    @Published var isFinished: Bool = false  // true after cat picker
+
+    func checkAuth() {
+        let p = Process()
+        p.launchPath = "/usr/bin/env"
+        p.arguments = ["gh", "auth", "status"]
+        p.standardOutput = Pipe()
+        p.standardError  = Pipe()
+        try? p.run()
+        p.waitUntilExit()
+        ghAuthed = (p.terminationStatus == 0)
+    }
+
+    /// Try to suggest a sensible default repo: first repo in the user's gh list.
+    func suggestRepo() {
+        let p = Process()
+        p.launchPath = "/usr/bin/env"
+        p.arguments = ["gh", "repo", "list", "--limit", "1",
+                       "--json", "nameWithOwner", "--jq", ".[0].nameWithOwner"]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError  = Pipe()
+        try? p.run()
+        p.waitUntilExit()
+        if p.terminationStatus == 0,
+           let data = try? pipe.fileHandleForReading.readToEnd(),
+           let s = String(data: data, encoding: .utf8) {
+            let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !t.isEmpty { repo = t }
+        }
+    }
+
+    static let repoRegex = #"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"#
+
+    var repoIsValid: Bool {
+        repo.range(of: Self.repoRegex, options: .regularExpression) != nil
+    }
+}
