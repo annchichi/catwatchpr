@@ -15,6 +15,18 @@ echo "→ Cleaning previous build..."
 rm -rf "$APP"
 mkdir -p "$MACOS" "$RES/scripts" "$RES/launchd"
 
+echo "→ Staging launchd plist templates..."
+for label in com.annchiahui.woo-sprinkles.menubar \
+             com.annchiahui.woo-sprinkles.watch \
+             com.annchiahui.woo-sprinkles.sync; do
+    src="$DIR/$label.plist"
+    dest="$RES/launchd/$label.plist"
+    # Replace any existing absolute path with the placeholder; the launcher
+    # substitutes __BUNDLE_PATH__ at install time.
+    sed -E "s|/Users/[^/]+/tools/woo-sprinkles|__BUNDLE_PATH__/Contents/Resources/scripts|g" \
+        "$src" > "$dest"
+done
+
 echo "→ Compiling launcher Swift sources..."
 SOURCES=$(find "$DIR/launcher" -name "*.swift" | tr '\n' ' ')
 swiftc $SOURCES -o "$MACOS/CatWatchPR" \

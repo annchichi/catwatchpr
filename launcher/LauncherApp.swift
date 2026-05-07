@@ -1,33 +1,42 @@
 // launcher/LauncherApp.swift
-// @main entry. For now: shows a placeholder window so we can validate the
-// .app bundle compiles, launches, and shows up correctly. The wizard and
-// control panel are wired in later tasks.
+// @main entry. Intercepts CLI args before SwiftUI starts, otherwise shows
+// a placeholder window. Wizard and control panel arrive in later tasks.
 import SwiftUI
 
 @main
 struct LauncherApp: App {
+    init() {
+        // CLI mode short-circuits SwiftUI — used by tests and recovery shell.
+        // Run synchronously on the main actor (we're already on it during init).
+        MainActor.assumeIsolated {
+            if handleCLIIfNeeded() { /* exits inside */ }
+        }
+    }
+
+    @StateObject private var state = AppState()
+
     var body: some Scene {
         WindowGroup("CatWatchPR") {
             PlaceholderView()
+                .environmentObject(state)
                 .frame(minWidth: 460, minHeight: 360)
                 .background(CatStyle.bg)
+                .onAppear { state.startPolling() }
+                .onDisappear { state.stopPolling() }
         }
         .windowResizability(.contentSize)
     }
 }
 
 struct PlaceholderView: View {
+    @EnvironmentObject var state: AppState
     var body: some View {
         VStack(spacing: 16) {
-            Text("🐱")
-                .font(.system(size: 48))
-            Text("CatWatchPR")
-                .font(CatStyle.mono)
-                .tracking(2)
+            Text("🐱").font(.system(size: 48))
+            Text("CatWatchPR").font(CatStyle.mono).tracking(2)
                 .foregroundColor(CatStyle.cyan)
-            Text("scaffold OK · wizard wired in Task 4")
-                .font(CatStyle.monoSmall)
-                .foregroundColor(CatStyle.dim)
+            Text("installed: \(state.isInstalled ? "yes" : "no") · repo: \(state.status.repo.isEmpty ? "—" : state.status.repo)")
+                .font(CatStyle.monoSmall).foregroundColor(CatStyle.dim)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
