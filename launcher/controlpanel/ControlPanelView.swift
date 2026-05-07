@@ -40,6 +40,12 @@ struct ControlPanelView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .onChange(of: showActivity) { newValue in
+            if newValue {
+                ActivityWindowController.shared.show()
+                showActivity = false  // it's a separate window, not a sheet
+            }
+        }
         .sheet(isPresented: $showCatPicker) {
             CatPickerSheet(close: { showCatPicker = false })
         }
