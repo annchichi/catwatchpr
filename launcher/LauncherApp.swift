@@ -37,8 +37,7 @@ struct RootView: View {
     var body: some View {
         Group {
             if state.isInstalled && state.hasRepoConfig && wizard.isFinished {
-                // Control panel comes online in Task 6.
-                PlaceholderControlPanelView()
+                ControlPanelView()
             } else {
                 switch wizard.step {
                 case .welcome:    WelcomeView()
@@ -55,19 +54,5 @@ struct RootView: View {
                 wizard.isFinished = true
             }
         }
-    }
-}
-
-struct PlaceholderControlPanelView: View {
-    @EnvironmentObject var state: AppState
-    var body: some View {
-        VStack(spacing: 12) {
-            Text("✓ installed").font(CatStyle.mono).foregroundColor(CatStyle.green)
-            Text("repo: \(state.status.repo)")
-                .font(CatStyle.monoSmall).foregroundColor(CatStyle.dim)
-            Text("control panel arrives in Task 6")
-                .font(CatStyle.monoTiny).foregroundColor(CatStyle.dim)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
