@@ -7,7 +7,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/anntai/tools/woo-sprinkles/sync.sh</string>
+        <string>__BUNDLE_PATH__/Contents/Resources/scripts/sync.sh</string>
     </array>
     <key>StartCalendarInterval</key>
     <dict>
@@ -19,9 +19,9 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>PATH</key>
-        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+        <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
         <key>HOME</key>
-        <string>/Users/anntai</string>
+        <string>__HOME__</string>
     </dict>
     <key>StandardOutPath</key>
     <string>/tmp/woo-sprinkles-sync.log</string>
