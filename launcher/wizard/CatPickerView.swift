@@ -8,11 +8,11 @@ struct CatPickerView: View {
     @EnvironmentObject var state: AppState
     var onDone: () -> Void = {}
 
-    let cats: [(name: String, color: String, emoji: String, blurb: String)] = [
-        ("Mochi",  "cyan",  "🐱", "friendly · default"),
-        ("Boba",   "pink",  "🐈", "warm · excited"),
-        ("Matcha", "lime",  "😼", "minimal · no-nonsense"),
-        ("Miso",   "ghost", "👻", "soft · dreamy"),
+    let cats: [(name: String, color: String, blurb: String)] = [
+        ("Mochi",  "cyan",  "friendly · default"),
+        ("Boba",   "pink",  "warm · excited"),
+        ("Matcha", "lime",  "minimal · no-nonsense"),
+        ("Miso",   "ghost", "soft · dreamy"),
     ]
     var body: some View {
         VStack(spacing: 14) {
@@ -25,11 +25,11 @@ struct CatPickerView: View {
                 ForEach(cats, id: \.name) { cat in
                     Button(action: { pick(cat.name, cat.color) }) {
                         VStack(spacing: 6) {
-                            Text(cat.emoji).font(.system(size: 28))
+                            PixelCatView(color: cat.color, scale: 2)
                             Text(cat.name).font(CatStyle.mono).foregroundColor(CatStyle.cyan)
                             Text(cat.blurb).font(CatStyle.monoTiny).foregroundColor(CatStyle.dim)
                         }
-                        .frame(width: 90, height: 90)
+                        .frame(width: 100, height: 110)
                         .background(CatStyle.panelBg)
                         .overlay(Rectangle().stroke(
                             state.status.catName.lowercased() == cat.name.lowercased()

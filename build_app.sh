@@ -43,6 +43,23 @@ swiftc $SOURCES -o "$MACOS/CatWatchPR" \
        -framework SwiftUI -framework AppKit \
        -target arm64-apple-macos13.0
 
+echo "→ Generating app icon (Mochi pixel cat)..."
+ICONSET="$RES/AppIcon.iconset"
+mkdir -p "$ICONSET"
+RENDER="$DIR/tools/render_icon.swift"
+swift "$RENDER" 16   "$ICONSET/icon_16x16.png"
+swift "$RENDER" 32   "$ICONSET/icon_16x16@2x.png"
+cp    "$ICONSET/icon_16x16@2x.png"   "$ICONSET/icon_32x32.png"
+swift "$RENDER" 64   "$ICONSET/icon_32x32@2x.png"
+swift "$RENDER" 128  "$ICONSET/icon_128x128.png"
+swift "$RENDER" 256  "$ICONSET/icon_128x128@2x.png"
+cp    "$ICONSET/icon_128x128@2x.png" "$ICONSET/icon_256x256.png"
+swift "$RENDER" 512  "$ICONSET/icon_256x256@2x.png"
+cp    "$ICONSET/icon_256x256@2x.png" "$ICONSET/icon_512x512.png"
+swift "$RENDER" 1024 "$ICONSET/icon_512x512@2x.png"
+iconutil -c icns "$ICONSET" -o "$RES/AppIcon.icns"
+rm -rf "$ICONSET"
+
 echo "→ Writing Info.plist..."
 cat > "$CONTENTS/Info.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
@@ -53,6 +70,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleName</key>            <string>CatWatchPR</string>
     <key>CFBundleDisplayName</key>     <string>CatWatchPR</string>
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
+    <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
     <key>CFBundleShortVersionString</key><string>0.1.0</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>

@@ -3,9 +3,10 @@ import SwiftUI
 
 struct WelcomeView: View {
     @EnvironmentObject var wizard: WizardState
+    @EnvironmentObject var state: AppState
     var body: some View {
         VStack(spacing: 18) {
-            Text("🐱").font(.system(size: 56))
+            PixelCatView(color: state.status.catColor, scale: 5)
             Text("CATWATCHPR")
                 .font(CatStyle.mono).tracking(3).foregroundColor(CatStyle.cyan)
             Text("I watch your GitHub PRs and pop up\nwhen something needs you.")

@@ -22,7 +22,8 @@ struct LauncherApp: App {
             RootView()
                 .environmentObject(state)
                 .environmentObject(wizard)
-                .frame(minWidth: 460, minHeight: 360)
+                .frame(minWidth: 440, idealWidth: 480, maxWidth: 560,
+                       minHeight: 420, idealHeight: 540, maxHeight: 720)
                 .background(CatStyle.bg)
                 .onAppear { state.startPolling() }
                 .onDisappear { state.stopPolling() }
@@ -44,7 +45,8 @@ struct RootView: View {
                 case .authCheck:  AuthCheckView()
                 case .repoPicker: RepoPickerView()
                 case .install:    InstallView()
-                case .catPicker:  CatPickerView(onDone: { wizard.isFinished = true })
+                case .catPicker:  CatPickerView(onDone: { wizard.step = .allDone })
+                case .allDone:    AllDoneView()
                 }
             }
         }

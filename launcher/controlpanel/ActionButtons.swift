@@ -15,12 +15,14 @@ struct ActionButtons: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            HStack(spacing: 6) {
+            VStack(spacing: 6) {
                 Button("Restart all", action: restartAll)
                     .buttonStyle(PixelButtonStyle(primary: crashed))
                 Button("Activity") { showActivity = true }
                     .buttonStyle(PixelButtonStyle())
             }
+            .frame(width: 200)
+            .frame(maxWidth: .infinity)
             HStack(spacing: 18) {
                 Button("switch cat ▸") { showCatPicker = true }
                     .buttonStyle(.plain).foregroundColor(CatStyle.dim)

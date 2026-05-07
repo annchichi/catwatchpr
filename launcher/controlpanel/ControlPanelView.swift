@@ -16,7 +16,7 @@ struct ControlPanelView: View {
         VStack(spacing: 14) {
             // Header
             HStack(spacing: 12) {
-                Text("🐱").font(.system(size: 28))
+                PixelCatView(color: state.status.catColor, scale: 2)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(state.status.catName.uppercased())
                         .font(CatStyle.monoSmall).tracking(1.5)
