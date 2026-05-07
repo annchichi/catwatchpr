@@ -40,16 +40,17 @@ That's it. (To build from source you'll also need Swift via `xcode-select --inst
 
 ## Install
 
-1. Download the latest **`CatWatchPR.app.zip`** from [Releases](https://github.com/annchichi/catwatchpr/releases).
-2. Unzip it and drag `CatWatchPR.app` into `/Applications`.
-3. **Tell macOS to trust the app.** Because the app isn't signed by an Apple-registered developer, macOS will refuse to open it the first time and claim it's "damaged" (it isn't). Paste this one command in Terminal:
+1. Download the latest **`CatWatchPR.dmg`** from [Releases](https://github.com/annchichi/catwatchpr/releases).
+2. Double-click the DMG to open it. A window opens with `CatWatchPR.app` and a shortcut to `Applications` — drag the app onto the shortcut.
+3. Eject the DMG (right-click the disk icon on your desktop → *Eject*, or drag it to the Trash).
+4. **Tell macOS to trust the app.** Because the app isn't signed by an Apple-registered developer, macOS will refuse to open it the first time and claim it's "damaged" (it isn't). Paste this one command in Terminal:
 
    ```bash
    xattr -cr /Applications/CatWatchPR.app
    ```
 
    No output means it worked.
-4. **Right-click `CatWatchPR.app` → *Open*.** macOS may ask once more whether you really want to open it — click *Open*. After that, it opens normally.
+5. **Right-click `CatWatchPR.app` → *Open*.** macOS may ask once more whether you really want to open it — click *Open*. After that, it opens normally.
 
 A small wizard then walks you through:
 

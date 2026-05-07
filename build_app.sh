@@ -1,6 +1,7 @@
 #!/bin/bash
-# build_app.sh — assemble CatWatchPR.app from the launcher/ source.
-# Output: ./CatWatchPR.app next to this script.
+# build_app.sh — assemble CatWatchPR.app from the launcher/ source,
+# then package it into CatWatchPR.dmg for distribution.
+# Output: ./CatWatchPR.app and ./CatWatchPR.dmg next to this script.
 # Usage:  bash build_app.sh
 
 set -euo pipefail
@@ -72,7 +73,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
-    <key>CFBundleShortVersionString</key><string>0.1.0</string>
+    <key>CFBundleShortVersionString</key><string>0.1.2</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>NSHighResolutionCapable</key> <true/>
@@ -82,3 +83,17 @@ EOF
 
 echo "✓ Built: $APP"
 echo "  Run with: open '$APP'"
+
+echo "→ Packaging DMG..."
+DMG="$DIR/CatWatchPR.dmg"
+DMG_STAGING="$DIR/.dmg-staging"
+rm -rf "$DMG_STAGING" "$DMG"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
+hdiutil create -volname "CatWatchPR" \
+               -srcfolder "$DMG_STAGING" \
+               -ov -format UDZO \
+               "$DMG" >/dev/null
+rm -rf "$DMG_STAGING"
+echo "✓ Built: $DMG"

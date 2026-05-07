@@ -1,6 +1,8 @@
 WooSprinklesMenuBar.app/
 CatWatchPR.app/
 CatWatchPR.app.zip
+CatWatchPR.dmg
+.dmg-staging/
 *.o
 *.d
 .DS_Store
