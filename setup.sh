@@ -60,8 +60,8 @@ if [[ ! "$CHOSEN_REPO" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
 fi
 
 # 5. Patch repo into config files
-sed -i '' "s|^REPO=.*|REPO=\"$CHOSEN_REPO\"|" "$DIR/watch.sh"
-sed -i '' "s|^REPO=.*|REPO=\"$CHOSEN_REPO\"|" "$DIR/sync.sh"
+mkdir -p "$HOME/.config/woo-sprinkles"
+echo "$CHOSEN_REPO" > "$HOME/.config/woo-sprinkles/repo"
 echo "✓ Watching: $CHOSEN_REPO"
 echo ""
 

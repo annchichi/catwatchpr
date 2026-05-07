@@ -4,7 +4,11 @@
 # Usage: ./sync.sh [cat_color]
 #   cat_color: cyan (default) | lime | pink | ghost
 
-REPO="woocommerce/woocommerce"
+REPO=$(cat "$HOME/.config/woo-sprinkles/repo" 2>/dev/null | tr -d '[:space:]')
+if [ -z "$REPO" ]; then
+    echo "sync.sh: ~/.config/woo-sprinkles/repo not set — run setup or the launcher" >&2
+    exit 1
+fi
 CAT=$(cat "$HOME/.config/woo-sprinkles/cat_color" 2>/dev/null || echo "${WOO_SPRINKLES_CAT:-${1:-cyan}}")
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
