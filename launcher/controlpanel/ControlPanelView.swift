@@ -12,6 +12,16 @@ struct ControlPanelView: View {
         if case .crashed(let msg) = state.status.menubar { return msg } else { return nil }
     }
 
+    var closeHint: String {
+        switch state.status.catName.lowercased() {
+        case "mochi":  return "mochi's got it from here~ close this whenever"
+        case "boba":   return "boba's on it from the menu bar ✨ close this whenever!"
+        case "matcha": return "matcha. menu bar. close this."
+        case "miso":   return "miso… watches from the menu bar… close whenever…"
+        default:       return "you can close this window — the cat watches from your menu bar"
+        }
+    }
+
     var body: some View {
         VStack(spacing: 14) {
             // Header
@@ -36,6 +46,14 @@ struct ControlPanelView: View {
                 showRepoEditor: $showRepoEditor,
                 showRemoveConfirm: $showRemoveConfirm
             )
+            if crashedExcerpt == nil {
+                Text(closeHint)
+                    .font(CatStyle.monoTiny)
+                    .foregroundColor(CatStyle.dim)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 4)
+            }
             Spacer(minLength: 0)
         }
         .padding(18)
