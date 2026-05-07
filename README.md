@@ -42,7 +42,14 @@ That's it. (To build from source you'll also need Swift via `xcode-select --inst
 
 1. Download the latest **`CatWatchPR.app.zip`** from [Releases](https://github.com/annchichi/catwatchpr/releases).
 2. Unzip it and drag `CatWatchPR.app` into `/Applications`.
-3. **Right-click → *Open*** the first time. macOS will warn that the app is from an unidentified developer — click *Open* anyway. (The build is unsigned. After the first launch it opens normally.)
+3. **Tell macOS to trust the app.** Because the app isn't signed by an Apple-registered developer, macOS will refuse to open it the first time and claim it's "damaged" (it isn't). Paste this one command in Terminal:
+
+   ```bash
+   xattr -cr /Applications/CatWatchPR.app
+   ```
+
+   No output means it worked.
+4. **Right-click `CatWatchPR.app` → *Open*.** macOS may ask once more whether you really want to open it — click *Open*. After that, it opens normally.
 
 A small wizard then walks you through:
 
