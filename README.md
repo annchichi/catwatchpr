@@ -34,7 +34,7 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 
 - macOS
 
-That's it. (To build from source you'll also need Swift via `xcode-select --install`.)
+That's it.
 
 ---
 
@@ -81,38 +81,6 @@ From the control panel (open `CatWatchPR.app`):
 - **Restart all** — restart the three background agents
 - **Remove** — soft uninstall (your config is kept)
 - **Reset everything** — wipe state and start over
-
----
-
-## Build from source
-
-If you'd rather build the app yourself, you'll need Swift (`xcode-select --install`).
-
-```bash
-git clone https://github.com/annchichi/catwatchpr.git ~/tools/woo-sprinkles
-cd ~/tools/woo-sprinkles
-bash build_app.sh
-```
-
-Then drag the resulting `CatWatchPR.app` into `/Applications` and follow the install steps above.
-
-### Test the popup
-
-```bash
-swift ~/tools/woo-sprinkles/woo_cat.swift 0 0 0 cyan "12345:comment" 0 0 0 1
-```
-
-### Test confetti
-
-```bash
-swift ~/tools/woo-sprinkles/woo_cat.swift 0 0 0 cyan "" 0 0 0 0 "" "12345"
-```
-
-### Run the watch script manually
-
-```bash
-bash ~/tools/woo-sprinkles/watch.sh
-```
 
 ---
 
