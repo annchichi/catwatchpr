@@ -33,9 +33,11 @@ test -f "$TMP/.config/woo-sprinkles/repo" || { echo "FAIL: repo file missing"; e
 for label in menubar watch sync; do
     test -f "$TMP/Library/LaunchAgents/com.annchiahui.woo-sprinkles.$label.plist" \
         || { echo "FAIL: $label plist missing"; exit 1; }
-    grep -q "__BUNDLE_PATH__" \
-        "$TMP/Library/LaunchAgents/com.annchiahui.woo-sprinkles.$label.plist" \
-        && { echo "FAIL: $label plist still has __BUNDLE_PATH__ placeholder"; exit 1; }
+    if grep -q "__BUNDLE_PATH__\|__HOME__" \
+        "$TMP/Library/LaunchAgents/com.annchiahui.woo-sprinkles.$label.plist"; then
+        echo "FAIL: $label plist still has __BUNDLE_PATH__ or __HOME__ placeholder"
+        exit 1
+    fi
 done
 echo "  ✓ install wrote 3 plists + repo config"
 

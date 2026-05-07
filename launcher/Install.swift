@@ -52,8 +52,9 @@ struct Installer {
             guard let raw = try? String(contentsOfFile: template, encoding: .utf8) else {
                 throw InstallError.missingTemplate(template)
             }
-            let substituted = raw.replacingOccurrences(of: "__BUNDLE_PATH__",
-                                                       with: bundlePath)
+            let substituted = raw
+                .replacingOccurrences(of: "__BUNDLE_PATH__", with: bundlePath)
+                .replacingOccurrences(of: "__HOME__", with: homeDir.path)
             let dest = agentsDir.appendingPathComponent("\(label).plist")
             try substituted.write(to: dest, atomically: true, encoding: .utf8)
             // Reload (unload first to be safe; ignore errors)

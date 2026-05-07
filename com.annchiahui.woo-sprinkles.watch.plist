@@ -7,7 +7,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/bin/bash</string>
-        <string>/Users/anntai/tools/woo-sprinkles/watch.sh</string>
+        <string>__BUNDLE_PATH__/Contents/Resources/scripts/watch.sh</string>
     </array>
     <key>StartInterval</key>
     <integer>300</integer>
@@ -16,7 +16,7 @@
         <key>PATH</key>
         <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
         <key>HOME</key>
-        <string>/Users/anntai</string>
+        <string>__HOME__</string>
     </dict>
     <key>StandardOutPath</key>
     <string>/tmp/woo-sprinkles-watch.log</string>

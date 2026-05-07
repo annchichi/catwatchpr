@@ -6,7 +6,7 @@
     <string>com.annchiahui.woo-sprinkles.menubar</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/anntai/tools/woo-sprinkles/WooSprinklesMenuBar.app/Contents/MacOS/WooSprinklesMenuBar</string>
+        <string>__BUNDLE_PATH__/Contents/Resources/scripts/MenuBarAgent</string>
         <string>cyan</string>
     </array>
     <key>RunAtLoad</key>
@@ -16,7 +16,7 @@
     <key>EnvironmentVariables</key>
     <dict>
         <key>HOME</key>
-        <string>/Users/anntai</string>
+        <string>__HOME__</string>
     </dict>
     <key>StandardOutPath</key>
     <string>/tmp/woo-sprinkles-menubar.log</string>

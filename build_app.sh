@@ -27,6 +27,16 @@ for label in com.annchiahui.woo-sprinkles.menubar \
         "$src" > "$dest"
 done
 
+echo "→ Bundling scripts..."
+cp "$DIR/watch.sh" "$DIR/sync.sh" "$DIR/woo_cat.swift" "$DIR/cat_popup.swift" \
+   "$DIR/switch-cat.sh" "$RES/scripts/"
+chmod +x "$RES/scripts/"*.sh
+
+echo "→ Compiling menubar agent..."
+swiftc "$DIR/menubar.swift" -o "$RES/scripts/MenuBarAgent" \
+       -framework AppKit \
+       -target arm64-apple-macos13.0
+
 echo "→ Compiling launcher Swift sources..."
 SOURCES=$(find "$DIR/launcher" -name "*.swift" | tr '\n' ' ')
 swiftc $SOURCES -o "$MACOS/CatWatchPR" \
