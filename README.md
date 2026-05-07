@@ -33,63 +33,77 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 ## Requirements
 
 - macOS
-- Swift (comes with Xcode or `xcode-select --install`)
 
-Everything else (Homebrew, GitHub CLI, GitHub login) is handled automatically by `setup.sh`.
+That's it. (To build from source you'll also need Swift via `xcode-select --install`.)
 
 ---
 
 ## Install
 
-```bash
-git clone https://github.com/annchichi/catwatchpr.git ~/tools/woo-sprinkles
-cd ~/tools/woo-sprinkles
-bash setup.sh
-```
+1. Download the latest **`CatWatchPR.app.zip`** from [Releases](https://github.com/annchichi/catwatchpr/releases).
+2. Unzip it and drag `CatWatchPR.app` into `/Applications`.
+3. **Right-click → *Open*** the first time. macOS will warn that the app is from an unidentified developer — click *Open* anyway. (The build is unsigned. After the first launch it opens normally.)
 
-During setup you'll be asked which repo to watch. If you're in the Woo org it defaults to `woocommerce/woocommerce` — just hit Enter. Otherwise type your own (e.g. `mycompany/myrepo`).
+A small wizard then walks you through:
 
-This installs three background agents:
-- **watch** — checks GitHub notifications every 5 minutes
-- **sync** — syncs your open PR branches at 9am daily
-- **menubar** — keeps the cat face in your menu bar
+1. **Welcome**
+2. **GitHub auth check** — if you're not logged into `gh`, it copies the right command to your clipboard
+3. **Pick a repo to watch** — it suggests one; you can change it
+4. **Install** — sets up three background agents (watch, sync, menu bar)
+5. **Pick your cat** — Mochi, Boba, Matcha, or Miso
+
+That's it. The cat is now in your menu bar, watching your PRs.
 
 ---
 
 ## Usage
 
-**Switch cats:**
-```bash
-bash ~/tools/woo-sprinkles/switch-cat.sh mochi
-bash ~/tools/woo-sprinkles/switch-cat.sh boba
-bash ~/tools/woo-sprinkles/switch-cat.sh matcha
-bash ~/tools/woo-sprinkles/switch-cat.sh miso
-```
-Or use the menu bar dropdown — hover over "Switch cat".
+Click the cat in your menu bar to see pending notifications or switch cats.
 
-**Test the popup:**
-```bash
-swift ~/tools/woo-sprinkles/woo_cat.swift 0 0 0 cyan "12345:comment" 0 0 0 1
-```
-
-**Test confetti:**
-```bash
-swift ~/tools/woo-sprinkles/woo_cat.swift 0 0 0 cyan "" 0 0 0 0 "" "12345"
-```
-
-**Run the watch script manually:**
-```bash
-bash ~/tools/woo-sprinkles/watch.sh
-```
+Open `CatWatchPR.app` again any time to get the **control panel** — status, *Restart all*, *Activity* logs, switch cat, change repo, or remove the app.
 
 ---
 
 ## Customise
 
-`setup.sh` will ask which repo you want to watch during install. If you want to change it later, update the `REPO` variable at the top of `watch.sh` and `sync.sh`:
+From the control panel (open `CatWatchPR.app`):
+
+- **Switch cat** — Mochi, Boba, Matcha, Miso
+- **Change repo** — point the watcher at a different repo
+- **Restart all** — restart the three background agents
+- **Remove** — soft uninstall (your config is kept)
+- **Reset everything** — wipe state and start over
+
+---
+
+## Build from source
+
+If you'd rather build the app yourself, you'll need Swift (`xcode-select --install`).
 
 ```bash
-REPO="your-org/your-repo"
+git clone https://github.com/annchichi/catwatchpr.git ~/tools/woo-sprinkles
+cd ~/tools/woo-sprinkles
+bash build_app.sh
+```
+
+Then drag the resulting `CatWatchPR.app` into `/Applications` and follow the install steps above.
+
+### Test the popup
+
+```bash
+swift ~/tools/woo-sprinkles/woo_cat.swift 0 0 0 cyan "12345:comment" 0 0 0 1
+```
+
+### Test confetti
+
+```bash
+swift ~/tools/woo-sprinkles/woo_cat.swift 0 0 0 cyan "" 0 0 0 0 "" "12345"
+```
+
+### Run the watch script manually
+
+```bash
+bash ~/tools/woo-sprinkles/watch.sh
 ```
 
 ---
