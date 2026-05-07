@@ -117,7 +117,7 @@ func inboxNotifs() -> [(pr: String, reason: String)] {
                      .map(String.init)
         guard let pr = parts.first?.trimmingCharacters(in: .whitespaces),
               !pr.isEmpty,
-              pr.allSatisfy({ $0.isNumber }) else { return nil }
+              pr.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
         let reason = parts.count > 1
             ? parts[1].trimmingCharacters(in: .whitespaces)
             : "subscribed"
