@@ -49,8 +49,7 @@ That's it.
    xattr -cr /Applications/CatWatchPR.app
    ```
 
-   No output means it worked.
-5. **Right-click `CatWatchPR.app` → *Open*.** macOS may ask once more whether you really want to open it — click *Open*. After that, it opens normally.
+   No output means it worked. Double-click `CatWatchPR.app` to launch it.
 
 A small wizard then walks you through:
 
