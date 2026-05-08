@@ -2,9 +2,19 @@
 # build_app.sh — assemble CatWatchPR.app from the launcher/ source,
 # then package it into CatWatchPR.dmg for distribution.
 # Output: ./CatWatchPR.app and ./CatWatchPR.dmg next to this script.
-# Usage:  bash build_app.sh
+# Usage:  bash build_app.sh [--install]
+#         --install also deploys to /Applications and reloads LaunchAgents
+#         so edits go live in the running menubar without manual copy.
 
 set -euo pipefail
+
+INSTALL=0
+for arg in "$@"; do
+    case "$arg" in
+        --install) INSTALL=1 ;;
+        *) echo "Unknown arg: $arg" >&2; exit 2 ;;
+    esac
+done
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APP="$DIR/CatWatchPR.app"
@@ -73,7 +83,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
-    <key>CFBundleShortVersionString</key><string>0.1.2</string>
+    <key>CFBundleShortVersionString</key><string>0.1.3</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>NSHighResolutionCapable</key> <true/>
@@ -97,3 +107,20 @@ hdiutil create -volname "CatWatchPR" \
                "$DMG" >/dev/null
 rm -rf "$DMG_STAGING"
 echo "✓ Built: $DMG"
+
+if [ "$INSTALL" -eq 1 ]; then
+    DEST="/Applications/CatWatchPR.app"
+    echo "→ Installing to $DEST..."
+    rm -rf "$DEST"
+    cp -R "$APP" "$DEST"
+
+    echo "→ Reloading LaunchAgents..."
+    for label in com.annchiahui.woo-sprinkles.menubar \
+                 com.annchiahui.woo-sprinkles.watch \
+                 com.annchiahui.woo-sprinkles.sync; do
+        launchctl bootout "gui/$UID/$label" 2>/dev/null || true
+        launchctl bootstrap "gui/$UID" "$HOME/Library/LaunchAgents/$label.plist" \
+            && echo "  ✓ $label"
+    done
+    echo "✓ Installed and live."
+fi
