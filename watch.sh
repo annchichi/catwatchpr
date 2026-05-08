@@ -36,9 +36,12 @@ inbox_remove() {
     mv "$INBOX_FILE.tmp" "$INBOX_FILE"
 }
 
-# Get your open PR numbers
-my_prs=$(gh pr list --author "@me" --repo "$REPO" --state open \
-    --json number --jq '.[].number' 2>/dev/null | tr '\n' ' ')
+# Open PRs you authored OR are requested to review
+authored=$(gh pr list --author "@me" --repo "$REPO" --state open \
+    --json number --jq '.[].number' 2>/dev/null)
+review_requested=$(gh pr list --search "review-requested:@me" --repo "$REPO" --state open \
+    --json number --jq '.[].number' 2>/dev/null)
+my_prs=$(printf '%s\n%s\n' "$authored" "$review_requested" | sort -u | grep -v '^$' | tr '\n' ' ')
 
 # Detect merges: PRs that were open last run but are gone now
 prev_prs=$(cat "$PREV_PRS_FILE" 2>/dev/null || echo "")
