@@ -22,6 +22,11 @@ struct ControlPanelView: View {
         }
     }
 
+    var appVersion: String {
+        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+            as? String).map { "v\($0)" } ?? ""
+    }
+
     var body: some View {
         VStack(spacing: 14) {
             // Header
@@ -35,6 +40,9 @@ struct ControlPanelView: View {
                         .font(CatStyle.monoTiny).foregroundColor(CatStyle.dim)
                 }
                 Spacer()
+                Text(appVersion)
+                    .font(CatStyle.monoTiny)
+                    .foregroundColor(CatStyle.dim)
             }
             if let excerpt = crashedExcerpt {
                 AlertBanner(excerpt: excerpt)
