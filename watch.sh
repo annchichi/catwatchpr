@@ -3,6 +3,38 @@
 # Woo Sprinkles — watch for activity on YOUR PRs
 # Run every 5 minutes via launchd.
 
+# Allow tests to source us without running the orchestration body.
+# Pass --source-only as the first argument to define helpers and return.
+SOURCE_ONLY=0
+if [ "${1:-}" = "--source-only" ]; then
+    SOURCE_ONLY=1
+fi
+
+# Parse a state-file line. Echoes "OWNER REPO NUMBER" for qualified refs
+# (owner/repo#N), or empty for legacy or invalid input.
+parse_pr_ref() {
+    local line="$1"
+    if [[ "$line" =~ ^([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)#([0-9]+)$ ]]; then
+        echo "${BASH_REMATCH[1]} ${BASH_REMATCH[2]} ${BASH_REMATCH[3]}"
+    fi
+}
+
+# Read a state file and emit only lines that parse as qualified refs.
+read_qualified_refs() {
+    local file="$1"
+    [ -f "$file" ] || return 0
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [ -n "$(parse_pr_ref "$line")" ]; then
+            echo "$line"
+        fi
+    done < "$file"
+}
+
+# When sourced by tests, exit here without running the orchestration body.
+if [ "$SOURCE_ONLY" -eq 1 ]; then
+    return 0 2>/dev/null || exit 0
+fi
+
 REPO=$(cat "$HOME/.config/woo-sprinkles/repo" 2>/dev/null | tr -d '[:space:]')
 if [ -z "$REPO" ]; then
     echo "watch.sh: ~/.config/woo-sprinkles/repo not set — run setup or the launcher" >&2
