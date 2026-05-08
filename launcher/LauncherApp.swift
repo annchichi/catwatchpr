@@ -12,6 +12,25 @@ struct LauncherApp: App {
         MainActor.assumeIsolated {
             if handleCLIIfNeeded() { /* exits inside */ }
         }
+        Self.refreshDeployedPlists()
+    }
+
+    /// Re-write the deployed launch agent plists from this bundle's templates
+    /// on every launch. Keeps the deployed plists in sync with the .app so
+    /// plist-level changes (e.g. KeepAlive tweaks) take effect on upgrade
+    /// without making the user re-run the wizard. Idempotent.
+    private static func refreshDeployedPlists() {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let menubarPlist = home.appendingPathComponent(
+            "Library/LaunchAgents/com.annchiahui.woo-sprinkles.menubar.plist")
+        guard FileManager.default.fileExists(atPath: menubarPlist.path) else { return }
+
+        let repoFile = home.appendingPathComponent(".config/woo-sprinkles/repo")
+        guard let raw = try? String(contentsOf: repoFile, encoding: .utf8) else { return }
+        let repo = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !repo.isEmpty else { return }
+
+        try? Installer(bundlePath: Bundle.main.bundlePath).install(repo: repo)
     }
 
     @StateObject private var state  = AppState()
