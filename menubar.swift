@@ -235,7 +235,7 @@ func buildMenu() -> NSMenu {
     openItem.target = actions
     menu.addItem(openItem)
     menu.addItem(.separator())
-    menu.addItem(NSMenuItem(title: "Quit Woo Sprinkles",
+    menu.addItem(NSMenuItem(title: "Quit CatWatchPR",
                              action: #selector(NSApplication.terminate(_:)),
                              keyEquivalent: "q"))
     return menu
@@ -249,7 +249,7 @@ func updateIcon() {
         btn.image = makeCatIcon(palette: palette, dot: count > 0)
         btn.toolTip = count > 0
             ? "\(count) PR notification\(count > 1 ? "s" : "") — click to see"
-            : "Woo Sprinkles — watching your PRs"
+            : "CatWatchPR — watching your PRs"
     }
 }
 
