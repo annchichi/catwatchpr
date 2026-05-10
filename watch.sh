@@ -35,11 +35,6 @@ if [ "$SOURCE_ONLY" -eq 1 ]; then
     return 0 2>/dev/null || exit 0
 fi
 
-REPO=$(cat "$HOME/.config/woo-sprinkles/repo" 2>/dev/null | tr -d '[:space:]')
-if [ -z "$REPO" ]; then
-    echo "watch.sh: ~/.config/woo-sprinkles/repo not set — run setup or the launcher" >&2
-    exit 1
-fi
 CAT=$(cat "$HOME/.config/woo-sprinkles/cat_color" 2>/dev/null || echo "${WOO_SPRINKLES_CAT:-cyan}")
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="$HOME/.config/woo-sprinkles"
@@ -56,7 +51,7 @@ date +%s > "$CONFIG/last_checked"
 # Upsert a PR into the persistent inbox (one entry per PR, latest reason wins)
 inbox_upsert() {
     local pr="$1" reason="$2"
-    grep -v "^${pr}:" "$INBOX_FILE" > "$INBOX_FILE.tmp" 2>/dev/null || true
+    grep -Fv "${pr}:" "$INBOX_FILE" > "$INBOX_FILE.tmp" 2>/dev/null || true
     echo "${pr}:${reason}" >> "$INBOX_FILE.tmp"
     mv "$INBOX_FILE.tmp" "$INBOX_FILE"
 }
@@ -64,30 +59,40 @@ inbox_upsert() {
 # Remove a PR from the inbox (called when merged)
 inbox_remove() {
     local pr="$1"
-    grep -v "^${pr}:" "$INBOX_FILE" > "$INBOX_FILE.tmp" 2>/dev/null || true
+    grep -Fv "${pr}:" "$INBOX_FILE" > "$INBOX_FILE.tmp" 2>/dev/null || true
     mv "$INBOX_FILE.tmp" "$INBOX_FILE"
 }
 
-# Open PRs you authored OR are requested to review
-authored=$(gh pr list --author "@me" --repo "$REPO" --state open \
-    --json number --jq '.[].number' 2>/dev/null)
-review_requested=$(gh pr list --search "review-requested:@me" --repo "$REPO" --state open \
-    --json number --jq '.[].number' 2>/dev/null)
+# Open PRs you authored OR are requested to review (anywhere on GitHub).
+# Each line of output is "owner/repo#number". Uses `gh search prs` because
+# `gh pr list` is repo-scoped — there is no global mode without --repo.
+authored=$(gh search prs --author "@me" --state open --limit 100 \
+    --json number,repository \
+    --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"' \
+    2>/dev/null)
+review_requested=$(gh search prs --review-requested "@me" --state open --limit 100 \
+    --json number,repository \
+    --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"' \
+    2>/dev/null)
 my_prs=$(printf '%s\n%s\n' "$authored" "$review_requested" | sort -u | grep -v '^$' | tr '\n' ' ')
 
-# Detect merges: PRs that were open last run but are gone now
-prev_prs=$(cat "$PREV_PRS_FILE" 2>/dev/null || echo "")
+# Detect merges: PRs that were open last run but are gone now.
+# Use read_qualified_refs so legacy (pre-v0.2.0) bare-number lines are skipped.
+prev_prs=$(read_qualified_refs "$PREV_PRS_FILE" | tr '\n' ' ')
 merged_prs=()
-for pr in $prev_prs; do
-    if ! echo " $my_prs " | grep -qw "$pr"; then
-        state=$(gh pr view "$pr" --repo "$REPO" --json state --jq '.state' 2>/dev/null)
-        if [ "$state" = "MERGED" ]; then
-            merged_prs+=("$pr")
-            inbox_remove "$pr"
-        fi
+for ref in $prev_prs; do
+    # Skip if ref is still in the current involved set
+    if echo " $my_prs " | grep -qw "$ref"; then continue; fi
+    # Parse owner/repo#N → "owner repo N" (3 tokens)
+    read -r owner name number <<< "$(parse_pr_ref "$ref")"
+    [ -z "$number" ] && continue
+    state=$(gh pr view "$number" --repo "$owner/$name" --json state --jq '.state' 2>/dev/null)
+    if [ "$state" = "MERGED" ]; then
+        merged_prs+=("$ref")
+        inbox_remove "$ref"
     fi
 done
-echo "$my_prs" > "$PREV_PRS_FILE"
+echo "$my_prs" | tr ' ' '\n' | grep -v '^$' > "$PREV_PRS_FILE"
 
 # Celebrate merged PRs immediately
 if [ ${#merged_prs[@]} -gt 0 ]; then
@@ -102,51 +107,53 @@ fi
 # CI check monitoring — detect when running checks complete on any open PR
 CI_FILE="$CONFIG/ci_watching"
 touch "$CI_FILE"
-prev_watching=$(cat "$CI_FILE" 2>/dev/null | tr '\n' ' ')
+prev_watching=$(read_qualified_refs "$CI_FILE" | tr '\n' ' ')
 now_watching=""
 
-for pr in $my_prs; do
-    checks=$(gh pr checks "$pr" --repo "$REPO" 2>/dev/null)
+for ref in $my_prs; do
+    read -r owner name number <<< "$(parse_pr_ref "$ref")"
+    [ -z "$number" ] && continue
+    checks=$(gh pr checks "$number" --repo "$owner/$name" 2>/dev/null)
     [ -z "$checks" ] && continue
 
     has_pending=$(echo "$checks" | awk -F'\t' '$2=="pending"{c++} END{print c+0}')
     has_fail=$(echo "$checks"    | awk -F'\t' '$2=="fail"{c++} END{print c+0}')
 
     if [ "$has_pending" -gt 0 ]; then
-        now_watching="$now_watching$pr "
-    elif echo " $prev_watching " | grep -qw "$pr"; then
+        now_watching="$now_watching$ref "
+    elif echo " $prev_watching " | grep -qw "$ref"; then
         # Was running last check — now finished
         if [ "$has_fail" -gt 0 ]; then
-            inbox_upsert "$pr" "ci_fail"
-            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR #$pr has failing checks" &
+            inbox_upsert "$ref" "ci_fail"
+            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR $ref has failing checks" &
         else
-            inbox_upsert "$pr" "ci_pass"
-            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR #$pr is clear to merge!" &
+            inbox_upsert "$ref" "ci_pass"
+            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR $ref is clear to merge!" &
         fi
     fi
 done
-echo "$now_watching" > "$CI_FILE"
+echo "$now_watching" | tr ' ' '\n' | grep -v '^$' > "$CI_FILE"
 
-# Fetch unread notifications for this repo that are on PullRequests
+# Fetch ALL unread PR notifications, regardless of repo. Each row carries
+# a fully-qualified ref so downstream membership checks match my_prs.
 notif_tsv=$(gh api notifications --jq '
   [.[] | select(
     .unread == true and
-    .repository.full_name == "'"$REPO"'" and
     .subject.type == "PullRequest"
   ) | {
     id:     .id,
     reason: .reason,
-    pr:     (.subject.url | split("/") | last)
-  }] | .[] | "\(.id)\t\(.reason)\t\(.pr)"
+    ref:    "\(.repository.full_name)#\(.subject.url | split("/") | last)"
+  }] | .[] | "\(.id)\t\(.reason)\t\(.ref)"
 ' 2>/dev/null || true)
 
 [ -z "$notif_tsv" ] && exit 0
 
-# Keep only notifications on YOUR PRs
+# Keep only notifications on YOUR involved PRs
 my_notif_tsv=""
-while IFS=$'\t' read -r id reason pr; do
-    if echo " $my_prs " | grep -qw "$pr"; then
-        my_notif_tsv+="$id"$'\t'"$reason"$'\t'"$pr"$'\n'
+while IFS=$'\t' read -r id reason ref; do
+    if echo " $my_prs " | grep -qw "$ref"; then
+        my_notif_tsv+="$id"$'\t'"$reason"$'\t'"$ref"$'\n'
     fi
 done <<< "$notif_tsv"
 
@@ -165,17 +172,17 @@ echo "$current_ids" > "$SEEN_FILE"
 new_count=$(echo "$new_ids" | grep -c .)
 active_prs=()
 active_pr_ids=()
-while IFS=$'\t' read -r id reason pr; do
+while IFS=$'\t' read -r id reason ref; do
     if echo "$new_ids" | grep -qF "$id"; then
-        if ! printf '%s\n' "${active_pr_ids[@]}" | grep -qx "$pr"; then
-            active_pr_ids+=("$pr")
-            active_prs+=("${pr}:${reason}")
-            inbox_upsert "$pr" "$reason"
+        if ! printf '%s\n' "${active_pr_ids[@]}" | grep -qx "$ref"; then
+            active_pr_ids+=("$ref")
+            active_prs+=("${ref}:${reason}")
+            inbox_upsert "$ref" "$reason"
         fi
     fi
 done <<< "$my_notif_tsv"
 
 active_pr_list=$(IFS=','; echo "${active_prs[*]}")
 
-# Show the cat — pass all active PR numbers so it can show them and tap correctly
+# Show the cat — pass all active PR refs so it can show them and tap correctly
 swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "$active_pr_list" 0 0 0 "$new_count"
