@@ -61,4 +61,4 @@ case "$name" in
     *)      intro="Hi, I'm $name!" ;;
 esac
 echo "Switched to $name!"
-swift "$DIR/woo_cat.swift" 0 0 0 "$color" "" 0 0 0 0 "$intro"
+"$DIR/WooCat" 0 0 0 "$color" "" 0 0 0 0 "$intro"

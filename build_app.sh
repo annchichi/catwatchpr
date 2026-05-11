@@ -39,12 +39,18 @@ for label in com.annchiahui.woo-sprinkles.menubar \
 done
 
 echo "→ Bundling scripts..."
-cp "$DIR/watch.sh" "$DIR/sync.sh" "$DIR/woo_cat.swift" "$DIR/cat_popup.swift" \
-   "$DIR/switch-cat.sh" "$RES/scripts/"
+cp "$DIR/watch.sh" "$DIR/sync.sh" "$DIR/switch-cat.sh" "$RES/scripts/"
 chmod +x "$RES/scripts/"*.sh
 
 echo "→ Compiling menubar agent..."
 swiftc "$DIR/menubar.swift" -o "$RES/scripts/MenuBarAgent" \
+       -framework AppKit \
+       -target arm64-apple-macos13.0
+
+echo "→ Compiling cat popup..."
+# Pre-compile woo_cat.swift so users without a working Swift toolchain can still
+# render the cat (avoids "select a toolchain which matches the SDK" runtime errors).
+swiftc "$DIR/woo_cat.swift" -o "$RES/scripts/WooCat" \
        -framework AppKit \
        -target arm64-apple-macos13.0
 
@@ -83,7 +89,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
-    <key>CFBundleShortVersionString</key><string>0.2.0</string>
+    <key>CFBundleShortVersionString</key><string>0.2.1</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>NSHighResolutionCapable</key> <true/>

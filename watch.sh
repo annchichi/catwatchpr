@@ -114,7 +114,7 @@ echo "$my_prs" | tr ' ' '\n' | grep -v '^$' > "$PREV_PRS_FILE"
 # Celebrate merged PRs immediately
 if [ ${#merged_prs[@]} -gt 0 ]; then
     merged_list=$(IFS=','; echo "${merged_prs[*]}")
-    swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "" "$merged_list"
+    "$DIR/WooCat" 0 0 0 "$CAT" "" 0 0 0 0 "" "$merged_list"
 fi
 
 if [ -z "$my_prs" ]; then
@@ -142,10 +142,10 @@ for ref in $my_prs; do
         # Was running last check — now finished
         if [ "$has_fail" -gt 0 ]; then
             inbox_upsert "$ref" "ci_fail"
-            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR $ref has failing checks" &
+            "$DIR/WooCat" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR $ref has failing checks" &
         else
             inbox_upsert "$ref" "ci_pass"
-            swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR $ref is clear to merge!" &
+            "$DIR/WooCat" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR $ref is clear to merge!" &
         fi
     fi
 done
@@ -199,4 +199,4 @@ done <<< "$my_notif_tsv"
 active_pr_list=$(IFS=','; echo "${active_prs[*]}")
 
 # Show the cat — pass all active PR refs so it can show them and tap correctly
-swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "$active_pr_list" 0 0 0 "$new_count"
+"$DIR/WooCat" 0 0 0 "$CAT" "$active_pr_list" 0 0 0 "$new_count"
