@@ -89,7 +89,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
-    <key>CFBundleShortVersionString</key><string>0.2.2</string>
+    <key>CFBundleShortVersionString</key><string>0.2.3</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>NSHighResolutionCapable</key> <true/>
