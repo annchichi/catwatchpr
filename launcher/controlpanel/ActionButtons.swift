@@ -53,7 +53,7 @@ struct ActionButtons: View {
             if !FileManager.default.fileExists(atPath: plist.path) {
                 // Plist missing — load from bundle template again.
                 let inst = Installer(bundlePath: Bundle.main.bundlePath)
-                _ = try? inst.install(repo: state.status.repo)
+                _ = try? inst.install()
             }
         }
         state.refresh()

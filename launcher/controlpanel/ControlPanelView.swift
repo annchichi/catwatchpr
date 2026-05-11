@@ -132,7 +132,7 @@ struct RepoEditorSheet: View {
         .onAppear { repo = state.status.repo }
     }
     var isValid: Bool {
-        repo.range(of: WizardState.repoRegex, options: .regularExpression) != nil
+        repo.range(of: #"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"#, options: .regularExpression) != nil
     }
     func save() {
         let dir = FileManager.default.homeDirectoryForCurrentUser

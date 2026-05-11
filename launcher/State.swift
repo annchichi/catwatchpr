@@ -169,14 +169,13 @@ final class AppState: ObservableObject {
 }
 
 enum WizardStep: Int, CaseIterable {
-    case welcome, authCheck, repoPicker, install, catPicker, allDone
+    case welcome, authCheck, install, catPicker, allDone
 }
 
 @MainActor
 final class WizardState: ObservableObject {
     @Published var step: WizardStep = .welcome
     @Published var ghAuthed: Bool = false
-    @Published var repo: String = ""
     @Published var installError: String? = nil
     @Published var installing: Bool = false
     @Published var isFinished: Bool = false  // true after cat picker
@@ -214,35 +213,4 @@ final class WizardState: ObservableObject {
         }
     }
 
-    /// Try to suggest a sensible default repo: first repo in the user's gh list.
-    func suggestRepo() {
-        Task {
-            let suggestion = await Task.detached(priority: .userInitiated) { () -> String? in
-                guard let ghPath = WizardState.findGH() else { return nil }
-                let p = Process()
-                p.launchPath = ghPath
-                p.arguments = ["repo", "list", "--limit", "1",
-                               "--json", "nameWithOwner", "--jq", ".[0].nameWithOwner"]
-                let pipe = Pipe()
-                p.standardOutput = pipe
-                p.standardError  = Pipe()
-                try? p.run()
-                p.waitUntilExit()
-                guard p.terminationStatus == 0,
-                      let data = try? pipe.fileHandleForReading.readToEnd(),
-                      let s = String(data: data, encoding: .utf8) else { return nil }
-                let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
-                return t.isEmpty ? nil : t
-            }.value
-            if let suggestion, repo.isEmpty {
-                self.repo = suggestion
-            }
-        }
-    }
-
-    static let repoRegex = #"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"#
-
-    var repoIsValid: Bool {
-        repo.range(of: Self.repoRegex, options: .regularExpression) != nil
-    }
 }

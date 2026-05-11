@@ -17,7 +17,7 @@ struct AuthCheckView: View {
             if wizard.ghAuthed {
                 Text("● gh is authenticated")
                     .font(CatStyle.mono).foregroundColor(CatStyle.green)
-                Button("Continue") { wizard.step = .repoPicker }
+                Button("Continue") { wizard.step = .install }
                     .buttonStyle(PixelButtonStyle(primary: true))
                     .frame(width: 200)
             } else {

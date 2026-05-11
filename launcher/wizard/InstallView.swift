@@ -6,14 +6,13 @@ struct InstallView: View {
     @EnvironmentObject var state:  AppState
     var body: some View {
         VStack(spacing: 14) {
-            Text("step 4 / 4 — install")
+            Text("step 3 / 4 — install")
                 .font(CatStyle.monoTiny).tracking(2).textCase(.uppercase)
                 .foregroundColor(CatStyle.dim)
             VStack(alignment: .leading, spacing: 8) {
                 Text("about to do:")
                     .font(CatStyle.mono).foregroundColor(CatStyle.text)
                 Group {
-                    Text("· save repo: \(wizard.repo)")
                     Text("· install 3 background agents")
                     Text("· build menu bar app")
                     Text("· run a one-time check to verify it works")
@@ -26,15 +25,11 @@ struct InstallView: View {
                     .padding(8).background(CatStyle.panelBg)
             }
 
-            VStack(spacing: 8) {
-                Button(wizard.installing ? "Installing…" : "Install") {
-                    runInstall()
-                }
-                .buttonStyle(PixelButtonStyle(primary: true))
-                .disabled(wizard.installing)
-                Button("Back") { wizard.step = .repoPicker }
-                    .buttonStyle(PixelButtonStyle())
+            Button(wizard.installing ? "Installing…" : "Install") {
+                runInstall()
             }
+            .buttonStyle(PixelButtonStyle(primary: true))
+            .disabled(wizard.installing)
             .frame(width: 200)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -44,12 +39,11 @@ struct InstallView: View {
     private func runInstall() {
         wizard.installing = true
         wizard.installError = nil
-        let repo = wizard.repo
         let bundlePath = Bundle.main.bundlePath
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 let inst = Installer(bundlePath: bundlePath)
-                try inst.install(repo: repo)
+                try inst.install()
                 // One-time smoke run of watch.sh; surface failure inline but don't abort.
                 // Mac .apps don't inherit shell PATH, so explicitly include the
                 // common Homebrew locations so watch.sh can find `gh`.

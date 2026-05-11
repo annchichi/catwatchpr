@@ -62,7 +62,6 @@ struct RootView: View {
                 switch wizard.step {
                 case .welcome:    WelcomeView()
                 case .authCheck:  AuthCheckView()
-                case .repoPicker: RepoPickerView()
                 case .install:    InstallView()
                 case .catPicker:  CatPickerView(onDone: { wizard.step = .allDone })
                 case .allDone:    AllDoneView()
