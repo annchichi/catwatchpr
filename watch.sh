@@ -30,6 +30,21 @@ read_qualified_refs() {
     done < "$file"
 }
 
+# Run a gh command. On non-zero exit, log to stderr and signal failure
+# (caller should exit 0 to abort the tick without overwriting state).
+# Echoes stdout on success.
+gh_safe() {
+    local label="$1"; shift
+    local out
+    out=$("$@" 2>&1)
+    local rc=$?
+    if [ "$rc" -ne 0 ]; then
+        echo "watch.sh: $label failed (exit $rc): $out" >&2
+        return $rc
+    fi
+    echo "$out"
+}
+
 # When sourced by tests, exit here without running the orchestration body.
 if [ "$SOURCE_ONLY" -eq 1 ]; then
     return 0 2>/dev/null || exit 0
@@ -66,14 +81,16 @@ inbox_remove() {
 # Open PRs you authored OR are requested to review (anywhere on GitHub).
 # Each line of output is "owner/repo#number". Uses `gh search prs` because
 # `gh pr list` is repo-scoped — there is no global mode without --repo.
-authored=$(gh search prs --author "@me" --state open --limit 100 \
+authored=$(gh_safe "search authored" \
+    gh search prs --author "@me" --state open --limit 100 \
     --json number,repository \
-    --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"' \
-    2>/dev/null)
-review_requested=$(gh search prs --review-requested "@me" --state open --limit 100 \
+    --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"') \
+    || exit 0
+review_requested=$(gh_safe "search review-requested" \
+    gh search prs --review-requested "@me" --state open --limit 100 \
     --json number,repository \
-    --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"' \
-    2>/dev/null)
+    --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"') \
+    || exit 0
 my_prs=$(printf '%s\n%s\n' "$authored" "$review_requested" | sort -u | grep -v '^$' | tr '\n' ' ')
 
 # Detect merges: PRs that were open last run but are gone now.
@@ -136,16 +153,13 @@ echo "$now_watching" | tr ' ' '\n' | grep -v '^$' > "$CI_FILE"
 
 # Fetch ALL unread PR notifications, regardless of repo. Each row carries
 # a fully-qualified ref so downstream membership checks match my_prs.
-notif_tsv=$(gh api notifications --jq '
-  [.[] | select(
-    .unread == true and
-    .subject.type == "PullRequest"
-  ) | {
-    id:     .id,
-    reason: .reason,
-    ref:    "\(.repository.full_name)#\(.subject.url | split("/") | last)"
-  }] | .[] | "\(.id)\t\(.reason)\t\(.ref)"
-' 2>/dev/null || true)
+notif_tsv=$(gh_safe "api notifications" \
+    gh api notifications --jq '
+      [.[] | select(.unread == true and .subject.type == "PullRequest")
+       | { id: .id, reason: .reason,
+           ref: "\(.repository.full_name)#\(.subject.url | split("/") | last)" }]
+      | .[] | "\(.id)\t\(.reason)\t\(.ref)"') \
+    || exit 0
 
 [ -z "$notif_tsv" ] && exit 0
 
