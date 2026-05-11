@@ -53,6 +53,6 @@ notif_assigns=$(echo "$notif_data"  | awk '{print $3}')
 # Only show the cat when something actually needs attention
 if [ "$conflicts" -gt 0 ] || [ "$notif_reviews" -gt 0 ] || \
    [ "$notif_mentions" -gt 0 ] || [ "$notif_assigns" -gt 0 ]; then
-    "$DIR/WooCat" "$updated" "$skipped" "$conflicts" "$CAT" \
+    "$DIR/CatPopup" "$updated" "$skipped" "$conflicts" "$CAT" \
         "$conflict_list" "$notif_reviews" "$notif_mentions" "$notif_assigns"
 fi

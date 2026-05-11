@@ -61,4 +61,4 @@ case "$name" in
     *)      intro="Hi, I'm $name!" ;;
 esac
 echo "Switched to $name!"
-"$DIR/WooCat" 0 0 0 "$color" "" 0 0 0 0 "$intro"
+"$DIR/CatPopup" 0 0 0 "$color" "" 0 0 0 0 "$intro"

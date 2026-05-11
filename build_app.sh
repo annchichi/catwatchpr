@@ -50,7 +50,7 @@ swiftc "$DIR/menubar.swift" -o "$RES/scripts/MenuBarAgent" \
 echo "→ Compiling cat popup..."
 # Pre-compile woo_cat.swift so users without a working Swift toolchain can still
 # render the cat (avoids "select a toolchain which matches the SDK" runtime errors).
-swiftc "$DIR/woo_cat.swift" -o "$RES/scripts/WooCat" \
+swiftc "$DIR/woo_cat.swift" -o "$RES/scripts/CatPopup" \
        -framework AppKit \
        -target arm64-apple-macos13.0
 
@@ -89,7 +89,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
-    <key>CFBundleShortVersionString</key><string>0.2.1</string>
+    <key>CFBundleShortVersionString</key><string>0.2.2</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>NSHighResolutionCapable</key> <true/>
