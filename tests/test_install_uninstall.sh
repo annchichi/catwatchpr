@@ -23,13 +23,10 @@ BIN="$APP/Contents/MacOS/CatWatchPR"
 
 # Run installer with HOME pointing at temp dir.
 echo "→ Install with fake HOME..."
-HOME="$TMP" "$BIN" install "annchichi/test-repo" || {
+HOME="$TMP" "$BIN" install || {
     echo "FAIL: install command"; exit 1; }
 
 # Assertions
-test -f "$TMP/.config/woo-sprinkles/repo" || { echo "FAIL: repo file missing"; exit 1; }
-[ "$(cat "$TMP/.config/woo-sprinkles/repo")" = "annchichi/test-repo" ] \
-    || { echo "FAIL: repo file wrong content"; exit 1; }
 for label in menubar watch sync; do
     test -f "$TMP/Library/LaunchAgents/com.annchiahui.woo-sprinkles.$label.plist" \
         || { echo "FAIL: $label plist missing"; exit 1; }
@@ -39,7 +36,7 @@ for label in menubar watch sync; do
         exit 1
     fi
 done
-echo "  ✓ install wrote 3 plists + repo config"
+echo "  ✓ install wrote 3 plists"
 
 # Uninstall
 HOME="$TMP" "$BIN" uninstall || { echo "FAIL: uninstall command"; exit 1; }
@@ -48,9 +45,7 @@ for label in menubar watch sync; do
         echo "FAIL: $label plist still present after uninstall"; exit 1
     fi
 done
-test -f "$TMP/.config/woo-sprinkles/repo" \
-    || { echo "FAIL: uninstall wiped repo file (should be soft)"; exit 1; }
-echo "  ✓ uninstall removed plists, kept config"
+echo "  ✓ uninstall removed plists"
 
 # Reset
 HOME="$TMP" "$BIN" reset || { echo "FAIL: reset command"; exit 1; }
