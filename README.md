@@ -55,9 +55,8 @@ A small wizard then walks you through:
 
 1. **Welcome**
 2. **GitHub auth check** — if you're not logged into `gh`, it copies the right command to your clipboard
-3. **Pick a repo to watch** — it suggests one; you can change it
-4. **Install** — sets up three background agents (watch, sync, menu bar)
-5. **Pick your cat** — Mochi, Boba, Matcha, or Miso
+3. **Install** — sets up three background agents (watch, sync, menu bar)
+4. **Pick your cat** — Mochi, Boba, Matcha, or Miso
 
 That's it. The cat is now in your menu bar, watching your PRs.
 
@@ -67,7 +66,7 @@ That's it. The cat is now in your menu bar, watching your PRs.
 
 Click the cat in your menu bar to see pending notifications or switch cats.
 
-Open `CatWatchPR.app` again any time to get the **control panel** — status, *Restart all*, *Activity* logs, switch cat, change repo, or remove the app.
+Open `CatWatchPR.app` again any time to get the **control panel** — status, *Restart all*, *Activity* logs, switch cat, or remove the app.
 
 ---
 
@@ -76,7 +75,6 @@ Open `CatWatchPR.app` again any time to get the **control panel** — status, *R
 From the control panel (open `CatWatchPR.app`):
 
 - **Switch cat** — Mochi, Boba, Matcha, Miso
-- **Change repo** — point the watcher at a different repo
 - **Restart all** — restart the three background agents
 - **Remove** — soft uninstall (your config is kept)
 - **Reset everything** — wipe state and start over
