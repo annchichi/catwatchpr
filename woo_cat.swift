@@ -15,6 +15,24 @@ extension NSColor {
     }
 }
 
+/// Display "owner/repo#N" for a qualified ref, or "PR #N" for a bare number (legacy).
+func displayRef(_ raw: String) -> String {
+    if raw.contains("#") { return raw }
+    return "PR #\(raw)"
+}
+
+/// Construct GitHub PR URL from either a qualified ref ("owner/repo#N") or a bare number (legacy).
+/// Bare numbers fall back to woocommerce/woocommerce — those entries are short-lived and
+/// will be overwritten on the next watch tick.
+func githubURL(forRef raw: String) -> URL? {
+    if let hash = raw.firstIndex(of: "#") {
+        let repo = raw[..<hash]
+        let num  = raw[raw.index(after: hash)...]
+        return URL(string: "https://github.com/\(repo)/pull/\(num)")
+    }
+    return URL(string: "https://github.com/woocommerce/woocommerce/pull/\(raw)")
+}
+
 // MARK: - Sprites (0=transparent, 1=body, 2=dark, 3=eye-bright, 4=nose)
 
 typealias Sprite = [[Int]]
@@ -412,7 +430,7 @@ class CatView: NSView {
                     .font: NSFont.systemFont(ofSize: 10, weight: .bold),
                     .foregroundColor: palette.body.withAlphaComponent(bubbleAlpha)
                 ]
-                NSAttributedString(string: "PR #\(card.pr)", attributes: prAttr)
+                NSAttributedString(string: displayRef(card.pr), attributes: prAttr)
                     .draw(at: NSPoint(x: rect.minX+10, y: cy+cardH-17))
 
                 // Activity message
@@ -538,16 +556,17 @@ let mergedPRsRaw  = cmdArgs.count > 11
 let isCelebrating = !mergedPRsRaw.isEmpty
 let palette       = palettes[catName] ?? palettes["cyan"]!
 
-// Parse "prnum:reason" pairs — only when watch.sh signals activity (prActivity > 0)
+// Parse "ref:reason" pairs — only when watch.sh signals activity (prActivity > 0)
+// ref is either a qualified "owner/repo#N" (v0.2.0) or a bare number (v0.1.x legacy)
 let prCards: [PRCard] = prActivity > 0 ? activePRsRaw.compactMap { item in
     let parts = item.split(separator: ":", maxSplits: 1).map(String.init)
-    let pr    = parts[0]
-    guard !pr.isEmpty else { return nil }
+    let ref   = parts[0]
+    guard !ref.isEmpty else { return nil }
     let reason = parts.count > 1 ? parts[1] : "subscribed"
     return PRCard(
-        pr:  pr,
+        pr:  ref,
         msg: reasonToMsg(reason, cat: catName),
-        url: "https://github.com/woocommerce/woocommerce/pull/\(pr)"
+        url: githubURL(forRef: ref)?.absoluteString ?? ""
     )
 } : []
 
@@ -585,7 +604,7 @@ panel.orderFront(nil)
 // MARK: - Bubble content (sync mode only)
 
 if isCelebrating {
-    let names = mergedPRsRaw.map{"#\($0)"}.joined(separator:", ")
+    let names = mergedPRsRaw.map{ displayRef($0) }.joined(separator:", ")
     catView.celebrationMsg = "🎉 PR \(names) merged! Congrats!"
     catView.confettiParticles = spawnConfetti(palette: palette, windowWidth: WW, windowHeight: WH)
 } else if !greetMsg.isEmpty {
@@ -608,7 +627,7 @@ catView.onTap = {
     let urlStr: String
     if isCelebrating {
         urlStr = mergedPRsRaw.count == 1
-            ? "https://github.com/woocommerce/woocommerce/pull/\(mergedPRsRaw[0])"
+            ? (githubURL(forRef: mergedPRsRaw[0])?.absoluteString ?? "https://github.com/woocommerce/woocommerce/pulls?q=is:pr+author:%40me+is:merged")
             : "https://github.com/woocommerce/woocommerce/pulls?q=is:pr+author:%40me+is:merged"
     } else if !greetMsg.isEmpty {
         urlStr = "https://github.com/woocommerce/woocommerce/pulls?q=is:pr+author:%40me+is:open"
