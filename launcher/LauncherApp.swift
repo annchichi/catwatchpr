@@ -25,12 +25,7 @@ struct LauncherApp: App {
             "Library/LaunchAgents/com.annchiahui.woo-sprinkles.menubar.plist")
         guard FileManager.default.fileExists(atPath: menubarPlist.path) else { return }
 
-        let repoFile = home.appendingPathComponent(".config/woo-sprinkles/repo")
-        guard let raw = try? String(contentsOf: repoFile, encoding: .utf8) else { return }
-        let repo = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !repo.isEmpty else { return }
-
-        try? Installer(bundlePath: Bundle.main.bundlePath).install(repo: repo)
+        try? Installer(bundlePath: Bundle.main.bundlePath).install()
     }
 
     @StateObject private var state  = AppState()
