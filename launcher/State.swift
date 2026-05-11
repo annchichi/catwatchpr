@@ -15,7 +15,6 @@ struct AppStatus: Sendable {
     var openPRs:      Int = 0
     var catName:      String = "mochi"
     var catColor:     String = "cyan"
-    var repo:         String = ""
     var crashExcerpt: String? = nil  // most recent Fatal error line, if any
 }
 
@@ -73,17 +72,11 @@ final class AppState: ObservableObject {
                 "com.annchiahui.woo-sprinkles.menubar.plist").path)
     }
 
-    var hasRepoConfig: Bool {
-        guard let r = Self.readConfigFile("repo") else { return false }
-        return !r.isEmpty
-    }
-
     /// Pure background computation. No @MainActor, no @Published access.
     nonisolated static func computeStatus() -> AppStatus {
         var s = AppStatus()
         s.catName  = readConfigFile("cat_name")  ?? "mochi"
         s.catColor = readConfigFile("cat_color") ?? "cyan"
-        s.repo     = readConfigFile("repo")      ?? ""
         s.openPRs  = readConfigFile("prev_open_prs")?
             .split(separator: " ").count ?? 0
         s.lastChecked = lastCheckedLabel()

@@ -1,8 +1,7 @@
 // launcher/LauncherApp.swift
 // @main entry. Intercepts CLI args before SwiftUI starts. Otherwise routes:
 // - First-run / not yet onboarded → wizard
-// - Returning user (already installed + has repo config) → control panel placeholder
-// The control panel itself arrives in Task 6.
+// - Returning user (already installed) → control panel
 import SwiftUI
 
 @main
@@ -51,7 +50,7 @@ struct RootView: View {
     @EnvironmentObject var wizard: WizardState
     var body: some View {
         Group {
-            if state.isInstalled && state.hasRepoConfig && wizard.isFinished {
+            if state.isInstalled && wizard.isFinished {
                 ControlPanelView()
             } else {
                 switch wizard.step {
@@ -65,7 +64,7 @@ struct RootView: View {
         }
         .onAppear {
             // Returning user (already installed): skip the wizard entirely.
-            if state.isInstalled && state.hasRepoConfig {
+            if state.isInstalled {
                 wizard.isFinished = true
             }
         }

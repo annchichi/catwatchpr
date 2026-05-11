@@ -6,7 +6,6 @@ struct ActionButtons: View {
     @EnvironmentObject var state: AppState
     @Binding var showActivity: Bool
     @Binding var showCatPicker: Bool
-    @Binding var showRepoEditor: Bool
     @Binding var showRemoveConfirm: Bool
 
     var crashed: Bool {
@@ -25,9 +24,6 @@ struct ActionButtons: View {
             .frame(maxWidth: .infinity)
             HStack(spacing: 18) {
                 Button("switch cat ▸") { showCatPicker = true }
-                    .buttonStyle(.plain).foregroundColor(CatStyle.dim)
-                    .font(CatStyle.monoTiny)
-                Button("change repo ▸") { showRepoEditor = true }
                     .buttonStyle(.plain).foregroundColor(CatStyle.dim)
                     .font(CatStyle.monoTiny)
                 Button("remove ▸") { showRemoveConfirm = true }

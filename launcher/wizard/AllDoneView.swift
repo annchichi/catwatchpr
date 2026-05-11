@@ -19,7 +19,7 @@ struct AllDoneView: View {
                     Text(state.status.catName.uppercased())
                         .font(CatStyle.monoSmall).tracking(1.5)
                         .foregroundColor(CatStyle.cyan)
-                    Text("~ watching \(state.status.repo) ~")
+                    Text("~ watching wherever you're involved ~")
                         .font(CatStyle.monoTiny).foregroundColor(CatStyle.dim)
                 }
                 Spacer()
