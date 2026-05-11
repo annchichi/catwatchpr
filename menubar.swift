@@ -107,7 +107,24 @@ func lastCheckedLabel() -> String {
     return "Checked \(mins) mins ago"
 }
 
-func inboxNotifs() -> [(pr: String, reason: String)] {
+struct InboxEntry {
+    let display: String   // "PR #999" or "woocommerce/woocommerce#999"
+    let url: String       // GitHub URL to open
+    let rawRef: String    // key used for inbox removal: "999" or "owner/repo#999"
+    let reason: String
+}
+
+/// Holds the URL + rawRef needed by the menu-item action.
+class PRMenuInfo: NSObject {
+    let url: String
+    let rawRef: String
+    init(url: String, rawRef: String) { self.url = url; self.rawRef = rawRef; super.init() }
+}
+
+private let qualifiedRefPattern = try! NSRegularExpression(
+    pattern: #"^[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+#([0-9]+)$"#)
+
+func inboxNotifs() -> [InboxEntry] {
     let file = configDir.appendingPathComponent("inbox")
     guard let content = try? String(contentsOf: file, encoding: .utf8) else { return [] }
     return content.split(separator: "\n").compactMap { line in
@@ -115,21 +132,40 @@ func inboxNotifs() -> [(pr: String, reason: String)] {
         guard !s.isEmpty else { return nil }
         let parts = s.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
                      .map(String.init)
-        guard let pr = parts.first?.trimmingCharacters(in: .whitespaces),
-              !pr.isEmpty,
-              pr.allSatisfy({ $0.isASCII && $0.isNumber }) else { return nil }
-        let reason = parts.count > 1
-            ? parts[1].trimmingCharacters(in: .whitespaces)
-            : "subscribed"
-        return (pr: pr, reason: reason.isEmpty ? "subscribed" : reason)
+        guard let ref = parts.first?.trimmingCharacters(in: .whitespaces),
+              !ref.isEmpty else { return nil }
+        let reason: String = {
+            let r = parts.count > 1 ? parts[1].trimmingCharacters(in: .whitespaces) : ""
+            return r.isEmpty ? "subscribed" : r
+        }()
+
+        // Qualified ref: owner/repo#N
+        if let match = qualifiedRefPattern.firstMatch(
+                in: ref, range: NSRange(ref.startIndex..., in: ref)),
+           let numRange = Range(match.range(at: 1), in: ref) {
+            let number = String(ref[numRange])
+            // Derive owner/repo from the ref (everything before #N)
+            let repoSlug = String(ref[ref.startIndex ..< ref.index(ref.endIndex,
+                                                                   offsetBy: -(number.count + 1))])
+            let url = "https://github.com/\(repoSlug)/pull/\(number)"
+            return InboxEntry(display: ref, url: url, rawRef: ref, reason: reason)
+        }
+
+        // Legacy bare number: N
+        if ref.allSatisfy({ $0.isASCII && $0.isNumber }) {
+            let url = "https://github.com/woocommerce/woocommerce/pull/\(ref)"
+            return InboxEntry(display: "PR #\(ref)", url: url, rawRef: ref, reason: reason)
+        }
+
+        return nil
     }
 }
 
-func removePRFromInbox(_ pr: String) {
+func removePRFromInbox(_ rawRef: String) {
     let file = configDir.appendingPathComponent("inbox")
     guard let content = try? String(contentsOf: file, encoding: .utf8) else { return }
     let updated = content.split(separator: "\n")
-        .filter { !String($0).hasPrefix("\(pr):") }
+        .filter { !String($0).hasPrefix("\(rawRef):") }
         .joined(separator: "\n")
     try? updated.write(to: file, atomically: true, encoding: .utf8)
 }
@@ -153,10 +189,9 @@ class Actions: NSObject {
         NSWorkspace.shared.open(URL(string: "https://github.com/notifications")!)
     }
     @objc func openPR(_ sender: NSMenuItem) {
-        guard let urlStr = sender.representedObject as? String,
-              let url = URL(string: urlStr) else { return }
-        let pr = url.lastPathComponent
-        removePRFromInbox(pr)
+        guard let info = sender.representedObject as? PRMenuInfo,
+              let url = URL(string: info.url) else { return }
+        removePRFromInbox(info.rawRef)
         NSWorkspace.shared.open(url)
         updateIcon()
     }
@@ -196,14 +231,14 @@ func buildMenu() -> NSMenu {
         noneItem.isEnabled = false
         menu.addItem(noneItem)
     } else {
-        for (pr, reason) in notifs {
+        for entry in notifs {
             let item = NSMenuItem(
-                title: "PR #\(pr)  \(reasonLabel(reason))",
+                title: "\(entry.display)  \(reasonLabel(entry.reason))",
                 action: #selector(Actions.openPR(_:)),
                 keyEquivalent: ""
             )
             item.target = actions
-            item.representedObject = "https://github.com/woocommerce/woocommerce/pull/\(pr)"
+            item.representedObject = PRMenuInfo(url: entry.url, rawRef: entry.rawRef)
             menu.addItem(item)
         }
     }
