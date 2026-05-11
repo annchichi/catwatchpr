@@ -559,7 +559,8 @@ let palette       = palettes[catName] ?? palettes["cyan"]!
 // Parse "ref:reason" pairs — only when watch.sh signals activity (prActivity > 0)
 // ref is either a qualified "owner/repo#N" (v0.2.0) or a bare number (v0.1.x legacy)
 let prCards: [PRCard] = prActivity > 0 ? activePRsRaw.compactMap { item in
-    let parts = item.split(separator: ":", maxSplits: 1).map(String.init)
+    let parts = item.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false).map(String.init)
+    guard !parts.isEmpty else { return nil }
     let ref   = parts[0]
     guard !ref.isEmpty else { return nil }
     let reason = parts.count > 1 ? parts[1] : "subscribed"
