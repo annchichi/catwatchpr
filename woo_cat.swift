@@ -469,10 +469,18 @@ class CatView: NSView {
             let hasAction   = !actionLine.isEmpty
             let actionLines = actionLine.components(separatedBy:"\n").count
             let greetFont   = NSFont.systemFont(ofSize: 12, weight: .medium)
+            // Reserve 10px padding on each side of the bubble for text.
+            let textWidth   = bw - 20
             let bh: CGFloat
             if !greetLine.isEmpty {
+                // Measure with the actual text width so multi-line wrapping
+                // (long owner/repo#N messages) sets the bubble height correctly.
                 let measured = NSAttributedString(string: greetLine, attributes: [.font: greetFont])
-                    .boundingRect(with: NSSize(width: 10000, height: 200), options: .usesLineFragmentOrigin)
+                    .boundingRect(with: NSSize(width: textWidth, height: 200), options: .usesLineFragmentOrigin)
+                bh = ceil(measured.height) + 24
+            } else if !celebrationMsg.isEmpty {
+                let measured = NSAttributedString(string: celebrationMsg, attributes: [.font: greetFont])
+                    .boundingRect(with: NSSize(width: textWidth, height: 200), options: .usesLineFragmentOrigin)
                 bh = ceil(measured.height) + 24
             } else {
                 bh = hasAction ? CGFloat(38 + actionLines * 18) : 38
@@ -500,15 +508,19 @@ class CatView: NSView {
                     .font: greetFont,
                     .foregroundColor: NSColor(hex:"#ffd700").withAlphaComponent(bubbleAlpha)
                 ]
+                // draw(with:options:) wraps within the rect — multi-line text fits
+                // inside the bubble instead of overflowing horizontally.
                 NSAttributedString(string:celebrationMsg,attributes:a)
-                    .draw(at: NSPoint(x:bx+10, y:by+12))
+                    .draw(with: NSRect(x: bx+10, y: by+10, width: textWidth, height: bh-20),
+                          options: .usesLineFragmentOrigin)
             } else if !greetLine.isEmpty {
                 let a: [NSAttributedString.Key:Any] = [
                     .font: greetFont,
                     .foregroundColor: palette.body.withAlphaComponent(bubbleAlpha)
                 ]
                 NSAttributedString(string:greetLine,attributes:a)
-                    .draw(at: NSPoint(x:bx+10, y:by+12))
+                    .draw(with: NSRect(x: bx+10, y: by+10, width: textWidth, height: bh-20),
+                          options: .usesLineFragmentOrigin)
             } else {
                 if !summaryLine.isEmpty {
                     let a: [NSAttributedString.Key:Any] = [
@@ -577,7 +589,7 @@ let screen = NSScreen.main!
 let sw = screen.frame.width, sh = screen.frame.height
 let visY = screen.visibleFrame.origin.y
 
-let WW: CGFloat = 230
+let WW: CGFloat = 380
 let cardCount = min(prCards.count, 3)
 let WH: CGFloat = isCelebrating
     ? sh - visY - 60 - 30
