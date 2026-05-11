@@ -3,7 +3,7 @@
 // ~/Library/LaunchAgents/ with __BUNDLE_PATH__ substituted, runs launchctl
 // load/unload, and (for "Reset everything") wipes ~/.config/woo-sprinkles.
 //
-// CLI mode: `CatWatchPR install <repo>` / `uninstall` / `reset` so
+// CLI mode: `CatWatchPR install` / `uninstall` / `reset` so
 // integration tests can exercise this path without a UI.
 import Foundation
 
@@ -38,13 +38,11 @@ struct Installer {
     var agentsDir: URL { homeDir.appendingPathComponent("Library/LaunchAgents") }
     var templatesDir: String { "\(bundlePath)/Contents/Resources/launchd" }
 
-    /// Writes repo file, copies plists with substitution, loads agents.
-    func install(repo: String) throws {
+    /// Copies plists with substitution and loads agents. v0.2.0 watches all
+    /// involved PRs globally, so no per-user repo configuration is written.
+    func install() throws {
         try FileManager.default.createDirectory(at: configDir,
                                                 withIntermediateDirectories: true)
-        try repo.write(to: configDir.appendingPathComponent("repo"),
-                       atomically: true, encoding: .utf8)
-
         try FileManager.default.createDirectory(at: agentsDir,
                                                 withIntermediateDirectories: true)
         for label in Self.labels {
@@ -104,8 +102,7 @@ func handleCLIIfNeeded() -> Bool {
     let inst = Installer(bundlePath: bundle)
     switch args[1] {
     case "install":
-        guard args.count >= 3 else { print("usage: install <repo>"); exit(2) }
-        do { try inst.install(repo: args[2]); print("installed") }
+        do { try inst.install(); print("installed") }
         catch { print("error: \(error)"); exit(1) }
         exit(0)
     case "uninstall":
