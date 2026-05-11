@@ -78,7 +78,7 @@ final class AppState: ObservableObject {
         s.catName  = readConfigFile("cat_name")  ?? "mochi"
         s.catColor = readConfigFile("cat_color") ?? "cyan"
         s.openPRs  = readConfigFile("prev_open_prs")?
-            .split(separator: " ").count ?? 0
+            .split(whereSeparator: \.isWhitespace).count ?? 0
         s.lastChecked = lastCheckedLabel()
 
         // One launchctl list call; parse output for all our labels at once.
