@@ -21,6 +21,8 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 
 ## The cats
 
+![cats](docs/cats.png)
+
 | Name | Color | Personality |
 |------|-------|-------------|
 | Mochi | cyan | friendly, default |
