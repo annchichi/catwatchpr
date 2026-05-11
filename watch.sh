@@ -142,10 +142,10 @@ for ref in $my_prs; do
         # Was running last check — now finished
         if [ "$has_fail" -gt 0 ]; then
             inbox_upsert "$ref" "ci_fail"
-            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR $ref has failing checks" &
+            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR $ref has failing checks"
         else
             inbox_upsert "$ref" "ci_pass"
-            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR $ref is clear to merge!" &
+            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR $ref is clear to merge!"
         fi
     fi
 done
