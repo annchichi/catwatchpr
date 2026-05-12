@@ -640,10 +640,24 @@ catView.onTap = {
     let urlStr: String
     if isCelebrating {
         urlStr = mergedPRsRaw.count == 1
-            ? (githubURL(forRef: mergedPRsRaw[0])?.absoluteString ?? "https://github.com/woocommerce/woocommerce/pulls?q=is:pr+author:%40me+is:merged")
-            : "https://github.com/woocommerce/woocommerce/pulls?q=is:pr+author:%40me+is:merged"
+            ? (githubURL(forRef: mergedPRsRaw[0])?.absoluteString
+                ?? "https://github.com/pulls?q=is:pr+author:%40me+is:merged")
+            : "https://github.com/pulls?q=is:pr+author:%40me+is:merged"
     } else if !greetMsg.isEmpty {
-        urlStr = "https://github.com/woocommerce/woocommerce/pulls?q=is:pr+author:%40me+is:open"
+        // Try to route to the specific PR mentioned in CI / activity messages
+        // (e.g. "✅ PR owner/repo#N is clear to merge!"). Fall back to your
+        // global open PRs page if the message has no qualified ref.
+        let refPattern = try? NSRegularExpression(
+            pattern: #"[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+#[0-9]+"#)
+        if let regex = refPattern,
+           let match = regex.firstMatch(in: greetMsg,
+                                         range: NSRange(greetMsg.startIndex..., in: greetMsg)),
+           let refRange = Range(match.range, in: greetMsg),
+           let url = githubURL(forRef: String(greetMsg[refRange])) {
+            urlStr = url.absoluteString
+        } else {
+            urlStr = "https://github.com/pulls?q=is:pr+author:%40me+is:open"
+        }
     } else {
         urlStr = "https://github.com/notifications"
     }
