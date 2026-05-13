@@ -6,18 +6,34 @@ struct ActivityView: View {
     @State private var lines: [String] = []
     @State private var timer: Timer?
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 2) {
-                ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                    Text(line)
+        ZStack {
+            // Background fills the whole frame regardless of content height.
+            CatStyle.bg.ignoresSafeArea()
+
+            if lines.isEmpty {
+                VStack(spacing: 6) {
+                    Text("no activity yet")
                         .font(CatStyle.monoSmall)
-                        .foregroundColor(color(for: line))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .foregroundColor(CatStyle.dim)
+                    Text("your watch is running. check back after the next tick.")
+                        .font(CatStyle.monoTiny)
+                        .foregroundColor(CatStyle.dim)
+                }
+            } else {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                            Text(line)
+                                .font(CatStyle.monoSmall)
+                                .foregroundColor(color(for: line))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(12)
         }
-        .background(CatStyle.bg)
         .frame(minWidth: 540, minHeight: 360)
         .onAppear {
             refresh()
