@@ -204,6 +204,16 @@ class Actions: NSObject {
                         atomically: true, encoding: .utf8)
         updateIcon()
     }
+    // The status item lives in MenuBarAgent, a separate process from the
+    // CatWatchPR launcher .app. NSApplication.terminate would only quit
+    // this agent, leaving the launcher window and process running.
+    @objc func quit(_ sender: Any) {
+        for launcher in NSRunningApplication.runningApplications(
+            withBundleIdentifier: "com.annchiahui.catwatchpr") {
+            launcher.terminate()
+        }
+        NSApplication.shared.terminate(nil)
+    }
 }
 let actions = Actions()
 
@@ -270,9 +280,11 @@ func buildMenu() -> NSMenu {
     openItem.target = actions
     menu.addItem(openItem)
     menu.addItem(.separator())
-    menu.addItem(NSMenuItem(title: "Quit CatWatchPR",
-                             action: #selector(NSApplication.terminate(_:)),
-                             keyEquivalent: "q"))
+    let quitItem = NSMenuItem(title: "Quit CatWatchPR",
+                              action: #selector(Actions.quit(_:)),
+                              keyEquivalent: "q")
+    quitItem.target = actions
+    menu.addItem(quitItem)
     return menu
 }
 
