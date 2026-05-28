@@ -3,9 +3,26 @@
 // - First-run / not yet onboarded → wizard
 // - Returning user (already installed) → control panel
 import SwiftUI
+import AppKit
+
+/// Mirrors the menu bar agent's Quit handler: when the launcher exits (e.g.
+/// dock right-click → Quit), tell the separate MenuBarAgent process to quit
+/// itself. A clean exit (code 0) keeps launchd from relaunching it.
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillTerminate(_ notification: Notification) {
+        DistributedNotificationCenter.default().postNotificationName(
+            Notification.Name("com.annchiahui.catwatchpr.menubar.quit"),
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
+    }
+}
 
 @main
 struct LauncherApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+
     init() {
         // CLI mode short-circuits SwiftUI — used by tests and recovery shell.
         MainActor.assumeIsolated {
