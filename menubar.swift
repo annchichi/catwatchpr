@@ -303,4 +303,15 @@ func updateIcon() {
 DispatchQueue.main.async { updateIcon() }
 Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in updateIcon() }
 
+// Listen for a quit signal from the launcher (dock-Quit path). terminate()
+// exits cleanly (code 0), so launchd's KeepAlive { SuccessfulExit = false }
+// won't relaunch us.
+DistributedNotificationCenter.default().addObserver(
+    forName: Notification.Name("com.annchiahui.catwatchpr.menubar.quit"),
+    object: nil,
+    queue: .main
+) { _ in
+    NSApplication.shared.terminate(nil)
+}
+
 app.run()
