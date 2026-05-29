@@ -182,6 +182,73 @@ func reasonLabel(_ reason: String) -> String {
     }
 }
 
+// MARK: - Update check
+
+struct ReleaseInfo {
+    let version: String   // tag_name with any leading "v" stripped
+    let htmlURL: String
+}
+
+/// Reads CFBundleShortVersionString from the host CatWatchPR.app. The
+/// MenuBarAgent is a raw executable at .../CatWatchPR.app/Contents/Resources/
+/// scripts/MenuBarAgent, so Bundle.main does not point at the app bundle.
+func currentAppVersion() -> String {
+    let exe = URL(fileURLWithPath: CommandLine.arguments[0])
+    let appBundle = exe
+        .deletingLastPathComponent()   // scripts/
+        .deletingLastPathComponent()   // Resources/
+        .deletingLastPathComponent()   // Contents/
+        .deletingLastPathComponent()   // CatWatchPR.app/
+    return (Bundle(url: appBundle)?
+        .infoDictionary?["CFBundleShortVersionString"] as? String) ?? "0.0.0"
+}
+
+/// True if `remote` is strictly newer than `local`. Compares dotted-integer
+/// versions component-wise, padding missing components with 0.
+func isNewerVersion(_ remote: String, than local: String) -> Bool {
+    let r = remote.split(separator: ".").map { Int($0) ?? 0 }
+    let l = local.split(separator: ".").map { Int($0) ?? 0 }
+    for i in 0..<max(r.count, l.count) {
+        let ri = i < r.count ? r[i] : 0
+        let li = i < l.count ? l[i] : 0
+        if ri != li { return ri > li }
+    }
+    return false
+}
+
+enum UpdateCheckError: Error {
+    case noReleases
+    case http(Int)
+    case malformed
+    case transport(Error)
+}
+
+func fetchLatestRelease(completion: @escaping (Result<ReleaseInfo, UpdateCheckError>) -> Void) {
+    let url = URL(string: "https://api.github.com/repos/annchichi/catwatchpr/releases/latest")!
+    var req = URLRequest(url: url, timeoutInterval: 10)
+    req.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+    URLSession.shared.dataTask(with: req) { data, response, error in
+        if let error = error {
+            completion(.failure(.transport(error))); return
+        }
+        guard let http = response as? HTTPURLResponse else {
+            completion(.failure(.malformed)); return
+        }
+        if http.statusCode == 404 {
+            completion(.failure(.noReleases)); return
+        }
+        guard http.statusCode == 200, let data = data,
+              let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+              let tag = obj["tag_name"] as? String,
+              let htmlURL = obj["html_url"] as? String else {
+            completion(.failure(http.statusCode == 200 ? .malformed : .http(http.statusCode)))
+            return
+        }
+        let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
+        completion(.success(ReleaseInfo(version: version, htmlURL: htmlURL)))
+    }.resume()
+}
+
 // MARK: - Actions
 
 class Actions: NSObject {
@@ -213,6 +280,48 @@ class Actions: NSObject {
             launcher.terminate()
         }
         NSApplication.shared.terminate(nil)
+    }
+    @objc func checkForUpdates(_ sender: Any) {
+        let local = currentAppVersion()
+        fetchLatestRelease { result in
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+                let alert = NSAlert()
+                alert.alertStyle = .informational
+                switch result {
+                case .failure(let err):
+                    alert.messageText = "Couldn't check for updates"
+                    alert.informativeText = {
+                        switch err {
+                        case .noReleases:        return "No releases have been published yet."
+                        case .http(let code):    return "GitHub returned HTTP \(code)."
+                        case .malformed:         return "Unexpected response from GitHub."
+                        case .transport(let e):  return e.localizedDescription
+                        }
+                    }()
+                    alert.addButton(withTitle: "OK")
+                    alert.runModal()
+                case .success(let info):
+                    if isNewerVersion(info.version, than: local) {
+                        alert.messageText = "CatWatchPR \(info.version) is available"
+                        alert.informativeText =
+                            "You're on \(local). Open the release page to download."
+                        alert.addButton(withTitle: "Open release page")
+                        alert.addButton(withTitle: "Later")
+                        if alert.runModal() == .alertFirstButtonReturn,
+                           let url = URL(string: info.htmlURL) {
+                            NSWorkspace.shared.open(url)
+                        }
+                    } else {
+                        alert.messageText = "You're up to date"
+                        alert.informativeText =
+                            "CatWatchPR \(local) is the latest version."
+                        alert.addButton(withTitle: "OK")
+                        alert.runModal()
+                    }
+                }
+            }
+        }
     }
 }
 let actions = Actions()
@@ -280,6 +389,11 @@ func buildMenu() -> NSMenu {
     openItem.target = actions
     menu.addItem(openItem)
     menu.addItem(.separator())
+    let updateItem = NSMenuItem(title: "Check for Updates…",
+                                action: #selector(Actions.checkForUpdates(_:)),
+                                keyEquivalent: "")
+    updateItem.target = actions
+    menu.addItem(updateItem)
     let quitItem = NSMenuItem(title: "Quit CatWatchPR",
                               action: #selector(Actions.quit(_:)),
                               keyEquivalent: "q")
