@@ -30,6 +30,21 @@ read_qualified_refs() {
     done < "$file"
 }
 
+# Build a notification dedup key. A GitHub notification thread id is stable for
+# the life of the PR — the SAME id covers the assignment, every review, and
+# every reply. Deduping on the bare id therefore suppresses all activity after
+# the first event we saw. Combine the id with updated_at so a re-surfaced thread
+# (new reply -> newer updated_at) yields a different key and re-notifies.
+notif_key() {
+    echo "${1}@${2}"
+}
+
+# Read a notif tsv (id\treason\tref\tupdated) on stdin, emit sorted dedup keys.
+# Rows missing the updated_at column are skipped (cannot be deduped safely).
+notif_keys() {
+    awk -F'\t' 'NF>=4 && $4!="" {print $1"@"$4}' | sort
+}
+
 # Run a gh command. On non-zero exit, log to stderr and signal failure
 # (caller should exit 0 to abort the tick without overwriting state).
 # Echoes stdout on success.
@@ -157,37 +172,40 @@ notif_tsv=$(gh_safe "api notifications" \
     gh api notifications --jq '
       [.[] | select(.unread == true and .subject.type == "PullRequest")
        | { id: .id, reason: .reason,
-           ref: "\(.repository.full_name)#\(.subject.url | split("/") | last)" }]
-      | .[] | "\(.id)\t\(.reason)\t\(.ref)"') \
+           ref: "\(.repository.full_name)#\(.subject.url | split("/") | last)",
+           updated: .updated_at }]
+      | .[] | "\(.id)\t\(.reason)\t\(.ref)\t\(.updated)"') \
     || exit 0
 
 [ -z "$notif_tsv" ] && exit 0
 
 # Keep only notifications on YOUR involved PRs
 my_notif_tsv=""
-while IFS=$'\t' read -r id reason ref; do
+while IFS=$'\t' read -r id reason ref updated; do
     if echo " $my_prs " | grep -qw "$ref"; then
-        my_notif_tsv+="$id"$'\t'"$reason"$'\t'"$ref"$'\n'
+        my_notif_tsv+="$id"$'\t'"$reason"$'\t'"$ref"$'\t'"$updated"$'\n'
     fi
 done <<< "$notif_tsv"
 
 [ -z "$my_notif_tsv" ] && exit 0
 
-# Which IDs are new (not seen before)?
-current_ids=$(echo "$my_notif_tsv" | awk -F'\t' '{print $1}' | sort)
-new_ids=$(comm -23 <(echo "$current_ids") <(sort "$SEEN_FILE"))
+# Which notifications are new? Dedup on "id@updated" (see notif_key): the thread
+# id alone is stable across a PR's whole life, so updated_at is what tells us a
+# thread has fresh activity (a new reply) since we last saw it.
+current_keys=$(echo "$my_notif_tsv" | notif_keys)
+new_keys=$(comm -23 <(echo "$current_keys") <(sort "$SEEN_FILE"))
 
-# Always update seen file with current IDs
-echo "$current_ids" > "$SEEN_FILE"
+# Always update seen file with current keys
+echo "$current_keys" > "$SEEN_FILE"
 
-[ -z "$new_ids" ] && exit 0
+[ -z "$new_keys" ] && exit 0
 
 # Collect unique PRs with the first reason seen for each
-new_count=$(echo "$new_ids" | grep -c .)
+new_count=$(echo "$new_keys" | grep -c .)
 active_prs=()
 active_pr_ids=()
-while IFS=$'\t' read -r id reason ref; do
-    if echo "$new_ids" | grep -qF "$id"; then
+while IFS=$'\t' read -r id reason ref updated; do
+    if echo "$new_keys" | grep -qx "$(notif_key "$id" "$updated")"; then
         if ! printf '%s\n' "${active_pr_ids[@]}" | grep -qx "$ref"; then
             active_pr_ids+=("$ref")
             active_prs+=("${ref}:${reason}")
