@@ -30,4 +30,24 @@ out=$(read_qualified_refs "$TMP" | tr '\n' ' ')
 [ "$out" = "woocommerce/woocommerce#1 annchichi/catwatchpr#7 " ] \
     || fail "read_qualified_refs filtered output, got: '$out'"
 
+# 4. notif_key: composite of stable thread id + updated_at timestamp
+[ "$(notif_key 24085618242 2026-06-04T02:34:06Z)" = "24085618242@2026-06-04T02:34:06Z" ] \
+    || fail "notif_key composite"
+
+# 5. notif_keys: emits sorted "id@updated" keys, skipping rows missing updated_at
+out=$(printf '%s\t%s\t%s\t%s\n' \
+        24085618242 assign woocommerce/woocommerce-shipping#1604 2026-06-04T02:34:06Z \
+    | notif_keys)
+[ "$out" = "24085618242@2026-06-04T02:34:06Z" ] || fail "notif_keys basic, got: '$out'"
+
+# 6. REGRESSION: the same thread id with a newer updated_at must produce a
+#    DISTINCT key. GitHub reuses one thread id for all activity on a PR, so a
+#    bare-id dedup suppressed replies on an already-seen PR (the Sam-reply bug).
+old_key=$(printf '%s\t%s\t%s\t%s\n' \
+        24085618242 assign woocommerce/woocommerce-shipping#1604 2026-06-04T02:20:00Z | notif_keys)
+new_key=$(printf '%s\t%s\t%s\t%s\n' \
+        24085618242 assign woocommerce/woocommerce-shipping#1604 2026-06-04T02:34:06Z | notif_keys)
+[ "$old_key" != "$new_key" ] \
+    || fail "notif_keys must differ when updated_at advances on the same thread id"
+
 echo "PASS: watch.sh helper tests"
