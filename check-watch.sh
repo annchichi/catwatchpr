@@ -27,7 +27,7 @@ fi
 # --watch blocks until all checks complete
 # exit 0 = all pass, non-zero = failures
 if gh pr checks "$PR" --repo "$REPO" --watch --interval 30 > /dev/null 2>&1; then
-    swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR #$PR is clear to merge!"
+    swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR #$PR checks passed"
 else
     swift "$DIR/woo_cat.swift" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR #$PR has failing checks"
 fi

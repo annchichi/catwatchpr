@@ -645,7 +645,7 @@ catView.onTap = {
             : "https://github.com/pulls?q=is:pr+author:%40me+is:merged"
     } else if !greetMsg.isEmpty {
         // Try to route to the specific PR mentioned in CI / activity messages
-        // (e.g. "✅ PR owner/repo#N is clear to merge!"). Fall back to your
+        // (e.g. "✅ PR owner/repo#N checks passed"). Fall back to your
         // global open PRs page if the message has no qualified ref.
         let refPattern = try? NSRegularExpression(
             pattern: #"[A-Za-z0-9_.\-]+/[A-Za-z0-9_.\-]+#[0-9]+"#)

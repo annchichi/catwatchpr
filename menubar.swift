@@ -176,7 +176,7 @@ func reasonLabel(_ reason: String) -> String {
     case "mention":          return "💬 mentioned you"
     case "comment":          return "💬 new comment"
     case "assign":           return "📋 assigned to you"
-    case "ci_pass":          return "✅ clear to merge"
+    case "ci_pass":          return "✅ checks passed"
     case "ci_fail":          return "❌ checks failing"
     default:                 return "🔔 new activity"
     }
