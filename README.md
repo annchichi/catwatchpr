@@ -10,7 +10,7 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 |---|---|---|
 | ![notification](docs/notification.png) | ![synced](docs/synced.png) | ![confetti](docs/confetti.png) |
 
-> **Download note:** public DMG downloads are paused until CatWatchPR has an Apple-signed, notarized release. If you are helping test it right now, use the source install below.
+> **Download note:** public DMG downloads are paused until CatWatchPR has an Apple-signed, notarized release. For now, install from source.
 
 ---
 
@@ -39,19 +39,28 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 - macOS 13+
 - GitHub account
 - GitHub CLI (`gh`) logged in to `github.com`
-- Xcode Command Line Tools, only for the temporary source install
+- Xcode Command Line Tools, for source install
 
 ---
 
 ## Install
 
-### Temporary tester install
+### Source install
 
 Until the public DMG is signed and notarized, install from source:
 
 ```bash
 git clone https://github.com/annchichi/catwatchpr.git
 cd catwatchpr
+bash build_app.sh --install
+open /Applications/CatWatchPR.app
+```
+
+If you already cloned CatWatchPR before, update instead:
+
+```bash
+cd catwatchpr
+git pull
 bash build_app.sh --install
 open /Applications/CatWatchPR.app
 ```

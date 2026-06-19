@@ -30,6 +30,7 @@ DMG="$DIR/CatWatchPR.dmg"
 
 SIGN_IDENTITY="${CATWATCHPR_SIGN_IDENTITY:-}"
 NOTARY_PROFILE="${CATWATCHPR_NOTARY_PROFILE:-}"
+INSTALL_DEST="${CATWATCHPR_INSTALL_DEST:-/Applications/CatWatchPR.app}"
 
 die() {
     echo "✗ $*" >&2
@@ -191,42 +192,39 @@ codesign --verify --deep --strict --verbose=4 "$APP"
 echo "✓ Built: $APP"
 echo "  Run with: open '$APP'"
 
-echo "→ Packaging DMG..."
-DMG_STAGING="$DIR/.dmg-staging"
-TMP_DMG="/private/tmp/CatWatchPR.dmg"
-rm -rf "$DMG_STAGING" "$DMG" "$TMP_DMG"
-mkdir -p "$DMG_STAGING"
-cp -R "$APP" "$DMG_STAGING/"
-ln -s /Applications "$DMG_STAGING/Applications"
-hdiutil create -volname "CatWatchPR" \
-               -srcfolder "$DMG_STAGING" \
-               -ov -format UDZO \
-               "$TMP_DMG" >/dev/null
-mv "$TMP_DMG" "$DMG"
-rm -rf "$DMG_STAGING"
-echo "✓ Built: $DMG"
+if [ "$INSTALL" -eq 0 ]; then
+    echo "→ Packaging DMG..."
+    DMG_STAGING="$DIR/.dmg-staging"
+    TMP_DMG="/private/tmp/CatWatchPR.dmg"
+    rm -rf "$DMG_STAGING" "$DMG" "$TMP_DMG"
+    mkdir -p "$DMG_STAGING"
+    cp -R "$APP" "$DMG_STAGING/"
+    ln -s /Applications "$DMG_STAGING/Applications"
+    hdiutil create -volname "CatWatchPR" \
+                   -srcfolder "$DMG_STAGING" \
+                   -ov -format UDZO \
+                   "$TMP_DMG" >/dev/null
+    mv "$TMP_DMG" "$DMG"
+    rm -rf "$DMG_STAGING"
+    echo "✓ Built: $DMG"
 
-if [ "$RELEASE" -eq 1 ]; then
-    notarize_release_dmg
-    echo "✓ Release DMG is signed, notarized, stapled, and accepted by Gatekeeper."
-else
-    echo "  Local build only: this DMG is not notarized and should not be published."
-    echo "  For a public release, run: CATWATCHPR_SIGN_IDENTITY='Developer ID Application: ...' CATWATCHPR_NOTARY_PROFILE='...' bash build_app.sh --release"
+    if [ "$RELEASE" -eq 1 ]; then
+        notarize_release_dmg
+        echo "✓ Release DMG is signed, notarized, stapled, and accepted by Gatekeeper."
+    else
+        echo "  Local build only: this DMG is not notarized and should not be published."
+        echo "  For a public release, run: CATWATCHPR_SIGN_IDENTITY='Developer ID Application: ...' CATWATCHPR_NOTARY_PROFILE='...' bash build_app.sh --release"
+    fi
 fi
 
 if [ "$INSTALL" -eq 1 ]; then
-    DEST="/Applications/CatWatchPR.app"
+    DEST="$INSTALL_DEST"
     echo "→ Installing to $DEST..."
+    mkdir -p "$(dirname "$DEST")"
     rm -rf "$DEST"
     cp -R "$APP" "$DEST"
 
-    echo "→ Reloading LaunchAgents..."
-    for label in com.annchiahui.woo-sprinkles.menubar \
-                 com.annchiahui.woo-sprinkles.watch \
-                 com.annchiahui.woo-sprinkles.sync; do
-        launchctl bootout "gui/$UID/$label" 2>/dev/null || true
-        launchctl bootstrap "gui/$UID" "$HOME/Library/LaunchAgents/$label.plist" \
-            && echo "  ✓ $label"
-    done
+    echo "→ Installing LaunchAgents..."
+    "$DEST/Contents/MacOS/CatWatchPR" install
     echo "✓ Installed and live."
 fi
