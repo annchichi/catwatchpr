@@ -10,6 +10,8 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 |---|---|---|
 | ![notification](docs/notification.png) | ![synced](docs/synced.png) | ![confetti](docs/confetti.png) |
 
+> **Download note:** public DMG downloads are paused until CatWatchPR has an Apple-signed, notarized release. If you are helping test it right now, use the source install below.
+
 ---
 
 ## What it does
@@ -34,24 +36,25 @@ A pixel cat lives in your Mac menu bar and quietly watches your GitHub pull requ
 
 ## Requirements
 
-- macOS
-
-That's it.
+- macOS 13+
+- GitHub account
+- GitHub CLI (`gh`) logged in to `github.com`
+- Xcode Command Line Tools, only for the temporary source install
 
 ---
 
 ## Install
 
-1. Download the latest **`CatWatchPR.dmg`** from [Releases](https://github.com/annchichi/catwatchpr/releases).
-2. Double-click the DMG to open it. A window opens with `CatWatchPR.app` and a shortcut to `Applications` — drag the app onto the shortcut.
-3. Eject the DMG (right-click the disk icon on your desktop → *Eject*, or drag it to the Trash).
-4. **Tell macOS to trust the app.** Because the app isn't signed by an Apple-registered developer, macOS will refuse to open it the first time and claim it's "damaged" (it isn't). Paste this one command in Terminal:
+### Temporary tester install
 
-   ```bash
-   xattr -cr /Applications/CatWatchPR.app
-   ```
+Until the public DMG is signed and notarized, install from source:
 
-   No output means it worked. Double-click `CatWatchPR.app` to launch it.
+```bash
+git clone https://github.com/annchichi/catwatchpr.git
+cd catwatchpr
+bash build_app.sh --install
+open /Applications/CatWatchPR.app
+```
 
 A small wizard then walks you through:
 
@@ -61,6 +64,18 @@ A small wizard then walks you through:
 4. **Pick your cat** — Mochi, Boba, Matcha, or Miso
 
 That's it. The cat is now in your menu bar, watching your PRs.
+
+### Public DMG releases
+
+The DMG is only for public sharing after it passes Apple signing and notarization:
+
+```bash
+CATWATCHPR_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+CATWATCHPR_NOTARY_PROFILE="catwatchpr-notary" \
+bash build_app.sh --release
+```
+
+If those credentials are missing, the release build fails before packaging. This prevents another DMG that downloads successfully but macOS refuses to open.
 
 ---
 
