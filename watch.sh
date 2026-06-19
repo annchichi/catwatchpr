@@ -45,6 +45,32 @@ notif_keys() {
     awk -F'\t' 'NF>=4 && $4!="" {print $1"@"$4}' | sort
 }
 
+ci_pass_message() {
+    local ref="$1" review_decision="${2:-}" merge_state="${3:-}" is_draft="${4:-false}"
+
+    if [ "$is_draft" = "true" ]; then
+        echo "✅ PR $ref checks passed; still a draft"
+    elif [ "$review_decision" = "APPROVED" ] && [ "$merge_state" = "CLEAN" ]; then
+        echo "✅ PR $ref is clear to merge!"
+    elif [ "$merge_state" = "BLOCKED" ] || [ "$review_decision" = "REVIEW_REQUIRED" ] || [ "$review_decision" = "CHANGES_REQUESTED" ]; then
+        echo "✅ PR $ref checks passed; review still needed"
+    elif [ -n "$review_decision$merge_state" ]; then
+        echo "✅ PR $ref checks passed; not merge-ready yet"
+    else
+        echo "✅ PR $ref checks passed"
+    fi
+}
+
+ci_review_message() {
+    local ref="$1" has_fail="${2:-0}"
+
+    if [ "$has_fail" -gt 0 ]; then
+        echo "❌ PR $ref has failing checks; review may need to wait"
+    else
+        echo "✅ PR $ref checks passed; ready for your review"
+    fi
+}
+
 # Run a gh command. On non-zero exit, log to stderr and signal failure
 # (caller should exit 0 to abort the tick without overwriting state).
 # Echoes stdout on success.
@@ -106,15 +132,16 @@ review_requested=$(gh_safe "search review-requested" \
     --json number,repository \
     --jq '.[] | "\(.repository.nameWithOwner)#\(.number)"') \
     || exit 0
+authored_prs=$(printf '%s\n' "$authored" | sort -u | grep -v '^$' | tr '\n' ' ')
 my_prs=$(printf '%s\n%s\n' "$authored" "$review_requested" | sort -u | grep -v '^$' | tr '\n' ' ')
 
-# Detect merges: PRs that were open last run but are gone now.
+# Detect merges: PRs you authored that were open last run but are gone now.
 # Use read_qualified_refs so legacy (pre-v0.2.0) bare-number lines are skipped.
 prev_prs=$(read_qualified_refs "$PREV_PRS_FILE" | tr '\n' ' ')
 merged_prs=()
 for ref in $prev_prs; do
-    # Skip if ref is still in the current involved set
-    if echo " $my_prs " | grep -qw "$ref"; then continue; fi
+    # Skip if ref is still in the current authored set
+    if echo " $authored_prs " | grep -qw "$ref"; then continue; fi
     # Parse owner/repo#N → "owner repo N" (3 tokens)
     read -r owner name number <<< "$(parse_pr_ref "$ref")"
     [ -z "$number" ] && continue
@@ -124,7 +151,7 @@ for ref in $prev_prs; do
         inbox_remove "$ref"
     fi
 done
-echo "$my_prs" | tr ' ' '\n' | grep -v '^$' > "$PREV_PRS_FILE"
+echo "$authored_prs" | tr ' ' '\n' | grep -v '^$' > "$PREV_PRS_FILE"
 
 # Celebrate merged PRs immediately
 if [ ${#merged_prs[@]} -gt 0 ]; then
@@ -136,7 +163,9 @@ if [ -z "$my_prs" ]; then
     exit 0
 fi
 
-# CI check monitoring — detect when running checks complete on any open PR
+# CI check monitoring — detect when running checks complete on PRs you authored
+# or were requested to review. Wording differs by audience: author lifecycle
+# vs reviewer readiness.
 CI_FILE="$CONFIG/ci_watching"
 touch "$CI_FILE"
 prev_watching=$(read_qualified_refs "$CI_FILE" | tr '\n' ' ')
@@ -155,12 +184,21 @@ for ref in $my_prs; do
         now_watching="$now_watching$ref "
     elif echo " $prev_watching " | grep -qw "$ref"; then
         # Was running last check — now finished
-        if [ "$has_fail" -gt 0 ]; then
+        if ! echo " $authored_prs " | grep -qw "$ref"; then
+            reason="ci_pass"
+            [ "$has_fail" -gt 0 ] && reason="ci_fail"
+            inbox_upsert "$ref" "$reason"
+            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "$(ci_review_message "$ref" "$has_fail")"
+        elif [ "$has_fail" -gt 0 ]; then
             inbox_upsert "$ref" "ci_fail"
             "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "❌ PR $ref has failing checks"
         else
+            merge_info=$(gh pr view "$number" --repo "$owner/$name" \
+                --json reviewDecision,mergeStateStatus,isDraft \
+                --jq '[.reviewDecision // "", .mergeStateStatus // "", (.isDraft | tostring)] | @tsv' 2>/dev/null)
+            IFS=$'\t' read -r review_decision merge_state is_draft <<< "$merge_info"
             inbox_upsert "$ref" "ci_pass"
-            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "✅ PR $ref is clear to merge!"
+            "$DIR/CatPopup" 0 0 0 "$CAT" "" 0 0 0 0 "$(ci_pass_message "$ref" "$review_decision" "$merge_state" "$is_draft")"
         fi
     fi
 done

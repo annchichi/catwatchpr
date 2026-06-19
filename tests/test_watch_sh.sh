@@ -50,4 +50,23 @@ new_key=$(printf '%s\t%s\t%s\t%s\n' \
 [ "$old_key" != "$new_key" ] \
     || fail "notif_keys must differ when updated_at advances on the same thread id"
 
+# 7. CI passing is not the same as GitHub saying the PR can merge. If reviews
+#    are still blocking, do not tell the user the PR is clear to merge.
+msg=$(ci_pass_message "woocommerce/woocommerce#64564" "CHANGES_REQUESTED" "BLOCKED" "false")
+[ "$msg" = "✅ PR woocommerce/woocommerce#64564 checks passed; review still needed" ] \
+    || fail "ci_pass_message should mention review still needed, got: '$msg'"
+
+msg=$(ci_pass_message "woocommerce/woocommerce#64564" "APPROVED" "CLEAN" "false")
+[ "$msg" = "✅ PR woocommerce/woocommerce#64564 is clear to merge!" ] \
+    || fail "ci_pass_message should say clear only when approved and clean, got: '$msg'"
+
+# 8. Reviewer-requested PRs get wording that explains the action for you.
+msg=$(ci_review_message "woocommerce/woocommerce#64564" 0)
+[ "$msg" = "✅ PR woocommerce/woocommerce#64564 checks passed; ready for your review" ] \
+    || fail "ci_review_message pass wording, got: '$msg'"
+
+msg=$(ci_review_message "woocommerce/woocommerce#64564" 1)
+[ "$msg" = "❌ PR woocommerce/woocommerce#64564 has failing checks; review may need to wait" ] \
+    || fail "ci_review_message fail wording, got: '$msg'"
+
 echo "PASS: watch.sh helper tests"
