@@ -76,6 +76,7 @@ func makeCatIcon(palette: Palette, dot: Bool) -> NSImage {
 
 let configDir = FileManager.default.homeDirectoryForCurrentUser
     .appendingPathComponent(".config/woo-sprinkles")
+let updatePromptFile = configDir.appendingPathComponent("last_update_prompt_version")
 
 func currentCatColor() -> String {
     let file = configDir.appendingPathComponent("cat_color")
@@ -216,6 +217,11 @@ func isNewerVersion(_ remote: String, than local: String) -> Bool {
     return false
 }
 
+func shouldAutoPromptUpdate(remote: String, local: String, lastPrompted: String?) -> Bool {
+    let prompted = lastPrompted?.trimmingCharacters(in: .whitespacesAndNewlines)
+    return isNewerVersion(remote, than: local) && prompted != remote
+}
+
 enum UpdateCheckError: Error {
     case noReleases
     case http(Int)
@@ -247,6 +253,20 @@ func fetchLatestRelease(completion: @escaping (Result<ReleaseInfo, UpdateCheckEr
         let version = tag.hasPrefix("v") ? String(tag.dropFirst()) : tag
         completion(.success(ReleaseInfo(version: version, htmlURL: htmlURL)))
     }.resume()
+}
+
+func showUpdateAvailableAlert(info: ReleaseInfo, local: String) {
+    NSApp.activate(ignoringOtherApps: true)
+    let alert = NSAlert()
+    alert.alertStyle = .informational
+    alert.messageText = "CatWatchPR \(info.version) is available"
+    alert.informativeText = "You're on \(local). Open the release page to download."
+    alert.addButton(withTitle: "Open release page")
+    alert.addButton(withTitle: "Later")
+    if alert.runModal() == .alertFirstButtonReturn,
+       let url = URL(string: info.htmlURL) {
+        NSWorkspace.shared.open(url)
+    }
 }
 
 // MARK: - Actions
@@ -303,15 +323,7 @@ class Actions: NSObject {
                     alert.runModal()
                 case .success(let info):
                     if isNewerVersion(info.version, than: local) {
-                        alert.messageText = "CatWatchPR \(info.version) is available"
-                        alert.informativeText =
-                            "You're on \(local). Open the release page to download."
-                        alert.addButton(withTitle: "Open release page")
-                        alert.addButton(withTitle: "Later")
-                        if alert.runModal() == .alertFirstButtonReturn,
-                           let url = URL(string: info.htmlURL) {
-                            NSWorkspace.shared.open(url)
-                        }
+                        showUpdateAvailableAlert(info: info, local: local)
                     } else {
                         alert.messageText = "You're up to date"
                         alert.informativeText =
@@ -320,6 +332,22 @@ class Actions: NSObject {
                         alert.runModal()
                     }
                 }
+            }
+        }
+    }
+
+    func checkForUpdatesAutomatically() {
+        let local = currentAppVersion()
+        let lastPrompted = try? String(contentsOf: updatePromptFile, encoding: .utf8)
+        fetchLatestRelease { result in
+            guard case .success(let info) = result,
+                  shouldAutoPromptUpdate(remote: info.version, local: local, lastPrompted: lastPrompted)
+            else { return }
+
+            DispatchQueue.main.async {
+                try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+                try? info.version.write(to: updatePromptFile, atomically: true, encoding: .utf8)
+                showUpdateAvailableAlert(info: info, local: local)
             }
         }
     }
@@ -414,7 +442,10 @@ func updateIcon() {
     }
 }
 
-DispatchQueue.main.async { updateIcon() }
+DispatchQueue.main.async {
+    updateIcon()
+    actions.checkForUpdatesAutomatically()
+}
 Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { _ in updateIcon() }
 
 // Listen for a quit signal from the launcher (dock-Quit path). terminate()
