@@ -74,7 +74,10 @@ cp    "$ICONSET/icon_128x128@2x.png" "$ICONSET/icon_256x256.png"
 swift "$RENDER" 512  "$ICONSET/icon_256x256@2x.png"
 cp    "$ICONSET/icon_256x256@2x.png" "$ICONSET/icon_512x512.png"
 swift "$RENDER" 1024 "$ICONSET/icon_512x512@2x.png"
-iconutil -c icns "$ICONSET" -o "$RES/AppIcon.icns"
+if ! iconutil -c icns "$ICONSET" -o "$RES/AppIcon.icns"; then
+    echo "  ! iconutil could not package the generated iconset; using bundled fallback icon."
+    cp "$DIR/assets/AppIcon.icns" "$RES/AppIcon.icns"
+fi
 rm -rf "$ICONSET"
 
 echo "→ Writing Info.plist..."
@@ -89,7 +92,7 @@ cat > "$CONTENTS/Info.plist" <<'EOF'
     <key>CFBundleExecutable</key>      <string>CatWatchPR</string>
     <key>CFBundleIconFile</key>        <string>AppIcon</string>
     <key>CFBundleVersion</key>         <string>1</string>
-    <key>CFBundleShortVersionString</key><string>0.2.7</string>
+    <key>CFBundleShortVersionString</key><string>0.2.8</string>
     <key>LSMinimumSystemVersion</key>  <string>13.0</string>
     <key>NSPrincipalClass</key>        <string>NSApplication</string>
     <key>NSHighResolutionCapable</key> <true/>
@@ -103,14 +106,16 @@ echo "  Run with: open '$APP'"
 echo "→ Packaging DMG..."
 DMG="$DIR/CatWatchPR.dmg"
 DMG_STAGING="$DIR/.dmg-staging"
-rm -rf "$DMG_STAGING" "$DMG"
+TMP_DMG="/private/tmp/CatWatchPR.dmg"
+rm -rf "$DMG_STAGING" "$DMG" "$TMP_DMG"
 mkdir -p "$DMG_STAGING"
 cp -R "$APP" "$DMG_STAGING/"
 ln -s /Applications "$DMG_STAGING/Applications"
 hdiutil create -volname "CatWatchPR" \
                -srcfolder "$DMG_STAGING" \
                -ov -format UDZO \
-               "$DMG" >/dev/null
+               "$TMP_DMG" >/dev/null
+mv "$TMP_DMG" "$DMG"
 rm -rf "$DMG_STAGING"
 echo "✓ Built: $DMG"
 
